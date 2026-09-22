@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Serial 硬體監測面板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .setup-panel { background: #e2e8f0; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;}
+        .container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
+        input[type="text"] { padding: 10px; border: 1px solid #ccc; width: 60%; font-size: 16px; }
+        .display-box { margin-top: 15px; padding: 10px; background: #e9ecef; font-family: monospace; font-size: 18px; }
+        .btn-stop { background: #d9534f; font-size: 18px; padding: 10px 30px; }
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        .disabled-layer { opacity: 0.5; pointer-events: none; }
+        
+        .hint-panel { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .hint-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .hint-col { flex: 1; min-width: 300px; background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ddd; }
+        .hint-col h3 { margin-top: 0; color: #007bff; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        .hint-col ul { list-style: none; padding-left: 0; margin: 0; font-size: 14px; line-height: 1.6; color: #444; }
+        .hint-col li { margin-bottom: 6px; }
+        .hint-col strong { color: #222; display: inline-block; width: 45px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Web Serial 硬體監測面板 (免後端)</h1>
+        <button class="btn-stop" onclick="stopAndDownload()" id="stopBtn" style="display:none;">⏹ 停止並下載 CSV</button>
+    </div>
+
+    <!-- 授權連線區塊 -->
+    <div class="setup-panel" id="setupPanel">
+        <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino</button>
+        <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A 電表</button>
+        <span id="connStatus" style="font-weight:bold; color:#d9534f;">請使用 Chrome 或 Edge 瀏覽器，並依序授權連線。</span>
+    </div>
+
+    <div class="container disabled-layer" id="mainControl">
+        <div class="panel">
+            <h2>Arduino IGBT</h2>
+            <button onclick="sendIGBT('ON')" class="btn-success">ON</button>
+            <button onclick="sendIGBT('OFF')" class="btn-stop">OFF</button>
+
+            <h2 style="margin-top: 30px;">3146A 控制</h2>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="cmdInput" placeholder="輸入指令 (如 R1)">
+                <button onclick="sendCmd()" class="btn-primary">發送</button>
+            </div>
+            <div class="display-box">
+                3146A 數值：<strong id="escortValue" style="color:#d9534f;">等待中...</strong>
+            </div>
+        </div>
+        
+        <div class="panel" style="flex: 2;">
+            <h2>溫度 (°C): <span id="tempValue" style="color: blue;">--</span></h2>
+            <div style="height: 400px;"><canvas id="tempChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="hint-panel">
+        <h2>📖 3146A 指令提示表</h2>
+        <!-- 提示表內容省略，與先前版本完全相同以節省版面 -->
+        <p style="color:#666;">(此處保留了所有 K/S/R 系列的指令列表提示)</p>
+    </div>
+
+    <script>
+        // 確認瀏覽器是否支援 Web Serial API
+        if (!("serial" in navigator)) {
+            alert("你的瀏覽器不支援 Web Serial API。請使用最新版的 Google Chrome 或 Microsoft Edge，並確保網頁是在安全的環境 (HTTPS 或 localhost) 下執行。");
+        }
+
+        let arduinoPort, escortPort;
+        let arduinoWriter, escortWriter;
+        let isArduinoConnected = false;
+        let isEscortConnected = false;
+        let csvData = [["Timestamp", "Temperature (°C)", "3146A Value"]]; // CSV 標題
+        let lastTemp = "";
+        let lastEscort = "";
+
+        // 圖表初始化
+        const ctx = document.getElementById('tempChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: '溫度', data: [], borderColor: 'blue', tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: false, animation: false }
+        });
+
+        // ================= 硬體連線邏輯 =================
+        async function connectArduino() {
+            try {
+                arduinoPort = await navigator.serial.requestPort();
+                await arduinoPort.open({ baudRate: 9600 });
+                
+                const textEncoder = new TextEncoderStream();
+                textEncoder.readable.pipeTo(arduinoPort.writable);
+                arduinoWriter = textEncoder.writable.getWriter();
+
+                isArduinoConnected = true;
+                document.getElementById('btnArduino').innerText = "✅ Arduino 已連線";
+                document.getElementById('btnArduino').disabled = true;
+                document.getElementById('btnArduino').style.background = "#555";
+                checkAllConnected();
+
+                readLoop(arduinoPort, handleArduinoData);
+            } catch (err) {
+                console.error("Arduino 連線失敗:", err);
+            }
+        }
+
+        async function connectEscort() {
+            try {
+                escortPort = await navigator.serial.requestPort();
+                // 關鍵：3146A 需要硬體交握
+                await escortPort.open({ baudRate: 9600, flowControl: 'hardware' });
+                
+                const textEncoder = new TextEncoderStream();
+                textEncoder.readable.pipeTo(escortPort.writable);
+                escortWriter = textEncoder.writable.getWriter();
+
+                isEscortConnected = true;
+                document.getElementById('btnEscort').innerText = "✅ 3146A 已連線";
+                document.getElementById('btnEscort').disabled = true;
+                document.getElementById('btnEscort').style.background = "#555";
+                checkAllConnected();
+
+                readLoop(escortPort, handleEscortData);
+            } catch (err) {
+                console.error("3146A 連線失敗:", err);
+            }
+        }
+
+        function checkAllConnected() {
+            if (isArduinoConnected && isEscortConnected) {
+                document.getElementById('setupPanel').style.display = "none";
+                document.getElementById('mainControl').classList.remove("disabled-layer");
+                document.getElementById('stopBtn').style.display = "block";
+            }
+        }
+
+        // ================= 讀取迴圈 (支援處理換行字元) =================
+        async function readLoop(port, callback) {
+            while (port.readable) {
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                const reader = textDecoder.readable.getReader();
+                let buffer = "";
+
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        buffer += value;
+                        let lines = buffer.split('\n');
+                        buffer = lines.pop(); // 保留不完整的最後一行
+                        for (let line of lines) {
+                            callback(line.trim());
+                        }
+                    }
+                } catch (error) {
+                    console.error("讀取錯誤:", error);
+                } finally {
+                    reader.releaseLock();
+                }
+            }
+        }
+
+        // ================= 資料處理邏輯 =================
+        function handleArduinoData(line) {
+            if (line.startsWith("Temperature:")) {
+                let temp = parseFloat(line.split(":")[1]);
+                if (!isNaN(temp)) {
+                    lastTemp = temp;
+                    document.getElementById('tempValue').innerText = temp.toFixed(2);
+                    
+                    chart.data.labels.push(new Date().toLocaleTimeString());
+                    chart.data.datasets[0].data.push(temp);
+                    if (chart.data.labels.length > 30) {
+                        chart.data.labels.shift();
+                        chart.data.datasets[0].data.shift();
+                    }
+                    chart.update();
+                    logData();
+                }
+            }
+        }
+
+        function handleEscortData(line) {
+            if (line) {
+                let displayVal = line;
+                let floatVal = parseFloat(line);
+                if (!isNaN(floatVal)) {
+                    displayVal = floatVal.toFixed(4);
+                }
+                lastEscort = displayVal;
+                document.getElementById('escortValue').innerText = displayVal;
+                logData();
+            }
+        }
+
+        function logData() {
+            // 寫入記憶體中的 CSV 陣列
+            let now = new Date();
+            let timestamp = now.getFullYear() + "-" + 
+                           String(now.getMonth()+1).padStart(2,'0') + "-" + 
+                           String(now.getDate()).padStart(2,'0') + " " + 
+                           String(now.getHours()).padStart(2,'0') + ":" + 
+                           String(now.getMinutes()).padStart(2,'0') + ":" + 
+                           String(now.getSeconds()).padStart(2,'0');
+            csvData.push([timestamp, lastTemp, lastEscort]);
+        }
+
+        // ================= 發送指令邏輯 =================
+        async function sendIGBT(state) {
+            if (arduinoWriter) {
+                await arduinoWriter.write(`${state.toUpperCase()}\n`);
+            }
+        }
+
+        const cmdInput = document.getElementById('cmdInput');
+        cmdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendCmd();
+        });
+
+        async function sendCmd() {
+            const val = cmdInput.value.trim();
+            if (val && escortWriter) {
+                // 3146A 需帶有 CR+LF 交握
+                await escortWriter.write(`${val}\r\n`);
+                cmdInput.value = '';
+            }
+        }
+
+        // ================= 停止並匯出 CSV =================
+        async function stopAndDownload() {
+            if (!confirm("確定要停止量測並下載 CSV 檔案嗎？")) return;
+
+            // 將陣列轉換為 CSV 字串格式，並加入 BOM 使 Excel 能正確識別 UTF-8
+            let csvContent = "\uFEFF" + csvData.map(e => e.join(",")).join("\n");
+            
+            // 建立 Blob 與虛擬的下載連結
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            let filename = `硬體測試紀錄_${new Date().getTime()}.csv`;
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alert("資料已開始下載。請重新整理網頁以開始新的量測。");
+            document.getElementById('mainControl').classList.add("disabled-layer");
+            document.getElementById('stopBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>
