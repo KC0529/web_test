@@ -44,8 +44,9 @@
     <div class="container disabled-layer" id="mainControl">
         <div class="panel">
             <h2>Arduino IGBT</h2>
-            <button onclick="sendIGBT('ON')" class="btn-success">ON</button>
-            <button onclick="sendIGBT('OFF')" class="btn-stop">OFF</button>
+            <button onclick="sendIGBT('ON')" style="background:#28a745;">ON</button>
+            <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
+            <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
             <h2 style="margin-top: 30px;">3146A 控制</h2>
             <div style="display:flex; gap:10px;">
