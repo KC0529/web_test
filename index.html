@@ -65,8 +65,52 @@
 
     <div class="hint-panel">
         <h2>📖 3146A 指令提示表</h2>
-        <!-- 提示表內容省略，與先前版本完全相同以節省版面 -->
-        <p style="color:#666;">(此處保留了所有 K/S/R 系列的指令列表提示)</p>
+        <div class="hint-grid">
+            <div class="hint-col">
+                <h3>【K 系列：設定按鍵指令】</h3>
+                <ul>
+                    <li><strong>K1:</strong> 模擬按下 Vdc (直流電壓) 鍵</li>
+                    <li><strong>K2:</strong> 模擬按下 Adc (直流電流) 鍵</li>
+                    <li><strong>K3:</strong> 模擬按下 Vac (交流電壓) 鍵</li>
+                    <li><strong>K4:</strong> 模擬按下 Aac (交流電流) 鍵</li>
+                    <li><strong>K5:</strong> 模擬按下 Ω (電阻) 鍵</li>
+                    <li><strong>K6:</strong> 模擬按下 Diode (二極體) 鍵</li>
+                    <li><strong>K7:</strong> 模擬按下 Hz (頻率) 鍵</li>
+                    <li><strong>K8:</strong> 模擬按下 AUTO (自動量程) 鍵</li>
+                    <li><strong>K9:</strong> 模擬按下 向上 (▲) 鍵</li>
+                    <li><strong>K10:</strong> 模擬按下 向下 (▼) 鍵</li>
+                    <li><strong>K11:</strong> 模擬按下 MinMax (最大/最小值) 鍵</li>
+                    <li><strong>K12:</strong> 模擬按下 Hold (讀值鎖定) 鍵</li>
+                    <li><strong>K14:</strong> 模擬按下 REL (相對值) 鍵</li>
+                    <li><strong>K15:</strong> 模擬按下 Shift 鍵</li>
+                    <li><strong>K16:</strong> 模擬按下 2nd (第二功能) 鍵</li>
+                </ul>
+            </div>
+            
+            <div class="hint-col">
+                <h3>【S 系列：設定指令】</h3>
+                <ul>
+                    <li><strong>S1:</strong> 用於設定主顯示區的測量功能 &lt;f&gt;、量程 &lt;r&gt; 以及讀取速率 &lt;x&gt;。</li>
+                    <li><strong>S2:</strong> 用於設定副顯示區的測量功能 &lt;f&gt;、量程 &lt;r&gt; 以及讀取速率 &lt;x&gt;。</li>
+                    <li><strong>SH:</strong> 用於設定比較功能 (COMP) 的上限值 (High limit)。</li>
+                    <li><strong>SL:</strong> 用於設定比較功能 (COMP) 的下限值 (Low limit)。</li>
+                    <li><strong>SR:</strong> 用於設定相對功能 (Relative function) 的相對基準值。</li>
+                    <li><strong>SO:</strong> 用於選擇 dBm 計算時的參考阻抗。</li>
+                </ul>
+            </div>
+
+            <div class="hint-col">
+                <h3>【R 系列：讀取與系統指令】</h3>
+                <ul>
+                    <li><strong>R0:</strong> 讀取電表的當前設定狀態。</li>
+                    <li><strong>R1:</strong> 讀取主顯示區的當前測量讀值。</li>
+                    <li><strong>R2:</strong> 讀取副顯示區的當前測量讀值。</li>
+                    <li><strong>RALL:</strong> 連續回傳電表狀態 (R0)、主顯示區讀值 (R1) 以及副顯示區讀值 (R2)。</li>
+                    <li><strong>RST:</strong> 將電表重置為開機時的初始狀態。</li>
+                    <li><strong>RV:</strong> 讀取電表的韌體版本與型號。</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <script>
