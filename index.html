@@ -127,6 +127,7 @@
         let csvData = [["Timestamp", "Temperature (°C)", "3146A Value"]]; // CSV 標題
         let lastTemp = "";
         let lastEscort = "";
+        let pollTimer; // 新增：用於 500ms 迴圈的計時器
 
         // 圖表初始化
         const ctx = document.getElementById('tempChart').getContext('2d');
@@ -185,10 +186,30 @@
                 document.getElementById('setupPanel').style.display = "none";
                 document.getElementById('mainControl').classList.remove("disabled-layer");
                 document.getElementById('stopBtn').style.display = "block";
+                
+                // 🚀 雙方連線後，啟動 500 毫秒同步記錄迴圈
+                pollTimer = setInterval(syncDataEvery500ms, 500);
             }
         }
 
-        // ================= 讀取迴圈 (支援處理換行字元) =================
+        // 🚀 每 500 毫秒被動記錄資料 (不干擾硬體)
+        async function syncDataEvery500ms() {
+            // 1. 更新溫度圖表
+            if (lastTemp !== "") {
+                chart.data.labels.push(new Date().toLocaleTimeString());
+                chart.data.datasets[0].data.push(lastTemp);
+                if (chart.data.labels.length > 30) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                chart.update();
+            }
+            
+            // 2. 將當下的 lastTemp 與 lastEscort 數值寫入 CSV
+            logData();
+        }
+
+        // ================= 讀取迴圈 =================
         async function readLoop(port, callback) {
             while (port.readable) {
                 const textDecoder = new TextDecoderStream();
@@ -221,16 +242,8 @@
                 let temp = parseFloat(line.split(":")[1]);
                 if (!isNaN(temp)) {
                     lastTemp = temp;
+                    // 只更新網頁顯示，畫圖與紀錄交給 500ms 迴圈處理
                     document.getElementById('tempValue').innerText = temp.toFixed(2);
-                    
-                    chart.data.labels.push(new Date().toLocaleTimeString());
-                    chart.data.datasets[0].data.push(temp);
-                    if (chart.data.labels.length > 30) {
-                        chart.data.labels.shift();
-                        chart.data.datasets[0].data.shift();
-                    }
-                    chart.update();
-                    logData();
                 }
             }
         }
@@ -243,27 +256,43 @@
                     displayVal = floatVal.toFixed(4);
                 }
                 lastEscort = displayVal;
+                // 只更新網頁顯示，紀錄交給 500ms 迴圈處理
                 document.getElementById('escortValue').innerText = displayVal;
-                logData();
             }
         }
 
         function logData() {
-            // 寫入記憶體中的 CSV 陣列
+            // 寫入記憶體中的 CSV 陣列 (加入毫秒以便驗證 0.5 秒取樣率)
             let now = new Date();
             let timestamp = now.getFullYear() + "-" + 
                            String(now.getMonth()+1).padStart(2,'0') + "-" + 
                            String(now.getDate()).padStart(2,'0') + " " + 
                            String(now.getHours()).padStart(2,'0') + ":" + 
                            String(now.getMinutes()).padStart(2,'0') + ":" + 
-                           String(now.getSeconds()).padStart(2,'0');
+                           String(now.getSeconds()).padStart(2,'0') + "." +
+                           String(now.getMilliseconds()).padStart(3,'0');
             csvData.push([timestamp, lastTemp, lastEscort]);
         }
 
         // ================= 發送指令邏輯 =================
         async function sendIGBT(state) {
-            if (arduinoWriter) {
-                await arduinoWriter.write(`${state.toUpperCase()}\n`);
+            if (!arduinoWriter) {
+                alert("Arduino 尚未連線！請先授權。");
+                return;
+            }
+            try {
+                // 傳送指令 (加上 \r\n 確保相容性)
+                await arduinoWriter.write(`${state.toUpperCase()}\r\n`);
+                
+                // 在按鈕旁邊顯示「已發送」提示，2秒後自動消失
+                const statusSpan = document.getElementById('igbtStatus');
+                if(statusSpan) {
+                    statusSpan.innerText = `✔️ 已傳送: ${state}`;
+                    setTimeout(() => statusSpan.innerText = "", 2000);
+                }
+            } catch (err) {
+                console.error("發送失敗:", err);
+                alert("無法發送指令給 Arduino，請確認線路是否鬆脫！");
             }
         }
 
@@ -284,6 +313,9 @@
         // ================= 停止並匯出 CSV =================
         async function stopAndDownload() {
             if (!confirm("確定要停止量測並下載 CSV 檔案嗎？")) return;
+
+            // 🚀 停止 500ms 取樣迴圈
+            clearInterval(pollTimer);
 
             // 將陣列轉換為 CSV 字串格式，並加入 BOM 使 Excel 能正確識別 UTF-8
             let csvContent = "\uFEFF" + csvData.map(e => e.join(",")).join("\n");
