@@ -48,25 +48,48 @@
             <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
-            <!-- 新版 3146A 快捷控制面板 -->
-            <h2 style="margin-top: 30px;">3146A 快捷控制</h2>
+            <!-- 新版 3146A 快捷控制與自訂面板 -->
+            <h2 style="margin-top: 30px;">3146A 控制面板</h2>
             
             <div style="margin-bottom: 15px; font-size: 14px;">
-                <strong style="color: #555;">讀取與系統：</strong>
+                <strong style="color: #555;">讀取與系統 (R 系列)：</strong>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
-                    <button onclick="sendEscortCmd('R1')" class="btn-primary" style="padding: 8px 12px; font-size: 14px;">讀取主畫面 (R1)</button>
-                    <button onclick="sendEscortCmd('R2')" class="btn-primary" style="padding: 8px 12px; font-size: 14px;">讀取副畫面 (R2)</button>
-                    <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">重置電表 (RST)</button>
+                    <button onclick="sendEscortCmd('R0')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">狀態(R0)</button>
+                    <button onclick="sendEscortCmd('R1')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">主畫面(R1)</button>
+                    <button onclick="sendEscortCmd('R2')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">副畫面(R2)</button>
+                    <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">重置(RST)</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 15px; font-size: 14px;">
-                <strong style="color: #555;">功能切換：</strong>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
-                    <button onclick="sendEscortCmd('K1')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">直流電壓 (Vdc)</button>
-                    <button onclick="sendEscortCmd('K2')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">直流電流 (Adc)</button>
-                    <button onclick="sendEscortCmd('K5')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">電阻 (Ω)</button>
-                    <button onclick="sendEscortCmd('K8')" style="background:#17a2b8; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">自動量程 (AUTO)</button>
+                <strong style="color: #555;">功能切換 (K 系列)：</strong>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                    <!-- 測量模式 -->
+                    <button onclick="sendEscortCmd('K1')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Vdc</button>
+                    <button onclick="sendEscortCmd('K2')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Adc</button>
+                    <button onclick="sendEscortCmd('K3')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Vac</button>
+                    <button onclick="sendEscortCmd('K4')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Aac</button>
+                    <button onclick="sendEscortCmd('K5')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Ω</button>
+                    <button onclick="sendEscortCmd('K6')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Diode</button>
+                    <button onclick="sendEscortCmd('K7')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Hz</button>
+                    <!-- 操作按鍵 -->
+                    <button onclick="sendEscortCmd('K8')" style="background:#17a2b8; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">AUTO</button>
+                    <button onclick="sendEscortCmd('K9')" style="background:#17a2b8; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">▲</button>
+                    <button onclick="sendEscortCmd('K10')" style="background:#17a2b8; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">▼</button>
+                    <button onclick="sendEscortCmd('K11')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">MinMax</button>
+                    <button onclick="sendEscortCmd('K12')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Hold</button>
+                    <button onclick="sendEscortCmd('K14')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">REL</button>
+                    <!-- 系統按鍵 -->
+                    <button onclick="sendEscortCmd('K15')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Shift</button>
+                    <button onclick="sendEscortCmd('K16')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">2nd</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; font-size: 14px;">
+                <strong style="color: #555;">自訂指令輸入：</strong>
+                <div style="display:flex; gap:10px; margin-top: 8px;">
+                    <input type="text" id="cmdInput" placeholder="輸入其他指令 (如 S1, SH)" style="width: 50%; padding: 6px; font-size: 14px;">
+                    <button onclick="sendCmd()" class="btn-primary" style="padding: 6px 12px; font-size: 14px;">發送</button>
                 </div>
             </div>
             
@@ -180,8 +203,10 @@
         async function connectEscort() {
             try {
                 escortPort = await navigator.serial.requestPort();
-                // 關鍵：3146A 需要硬體交握
-                await escortPort.open({ baudRate: 9600, flowControl: 'hardware' });
+                await escortPort.open({ baudRate: 9600 });
+                
+                // 🌟 強制拉高 DTR 與 RTS 腳位，喚醒 RS-232 轉接線
+                await escortPort.setSignals({ dataTerminalReady: true, requestToSend: true });
                 
                 const textEncoder = new TextEncoderStream();
                 textEncoder.readable.pipeTo(escortPort.writable);
@@ -227,7 +252,7 @@
             logData();
         }
 
-        // ================= 讀取迴圈 =================
+        // ================= 讀取迴圈 (相容所有換行符號) =================
         async function readLoop(port, callback) {
             while (port.readable) {
                 const textDecoder = new TextDecoderStream();
@@ -240,10 +265,13 @@
                         const { value, done } = await reader.read();
                         if (done) break;
                         buffer += value;
-                        let lines = buffer.split('\n');
+                        // 同時識別 \r\n, \n, \r
+                        let lines = buffer.split(/\r\n|\n|\r/);
                         buffer = lines.pop(); // 保留不完整的最後一行
                         for (let line of lines) {
-                            callback(line.trim());
+                            if (line.trim() !== "") {
+                                callback(line.trim());
+                            }
                         }
                     }
                 } catch (error) {
@@ -260,7 +288,6 @@
                 let temp = parseFloat(line.split(":")[1]);
                 if (!isNaN(temp)) {
                     lastTemp = temp;
-                    // 只更新網頁顯示，畫圖與紀錄交給 500ms 迴圈處理
                     document.getElementById('tempValue').innerText = temp.toFixed(2);
                 }
             }
@@ -274,7 +301,6 @@
                     displayVal = floatVal.toFixed(4);
                 }
                 lastEscort = displayVal;
-                // 只更新網頁顯示，紀錄交給 500ms 迴圈處理
                 document.getElementById('escortValue').innerText = displayVal;
             }
         }
@@ -298,10 +324,9 @@
                 return;
             }
             try {
-                // 傳送指令 (加上 \r\n 確保相容性)
+                // Arduino 使用 \r\n 確保相容性
                 await arduinoWriter.write(`${state.toUpperCase()}\r\n`);
                 
-                // 在按鈕旁邊顯示「已發送」提示，2秒後自動消失
                 const statusSpan = document.getElementById('igbtStatus');
                 if(statusSpan) {
                     statusSpan.innerText = `✔️ 已傳送: ${state}`;
@@ -320,10 +345,9 @@
                 return;
             }
             try {
-                // 3146A 需帶有 CR+LF 交握
-                await escortWriter.write(`${cmd}\r\n`);
+                // 3146A 儀器僅需 \r (CR)
+                await escortWriter.write(`${cmd}\r`);
                 
-                // 在數值旁邊顯示「已發送」提示，1.5秒後自動消失
                 const statusSpan = document.getElementById('escortStatus');
                 if(statusSpan) {
                     statusSpan.innerText = `✔️ 發送: ${cmd}`;
@@ -331,6 +355,35 @@
                 }
             } catch (err) {
                 console.error("3146A 發送失敗:", err);
+            }
+        }
+
+        // ================= 自訂指令輸入邏輯 =================
+        const cmdInput = document.getElementById('cmdInput');
+        if (cmdInput) {
+            cmdInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendCmd();
+            });
+        }
+
+        async function sendCmd() {
+            const val = cmdInput.value.trim();
+            if (val && escortWriter) {
+                try {
+                    // 3146A 儀器僅需 \r (CR)
+                    await escortWriter.write(`${val}\r`);
+                    
+                    const statusSpan = document.getElementById('escortStatus');
+                    if(statusSpan) {
+                        statusSpan.innerText = `✔️ 發送: ${val}`;
+                        setTimeout(() => statusSpan.innerText = "", 1500);
+                    }
+                    cmdInput.value = ''; // 發送後清空輸入框
+                } catch (err) {
+                    console.error("發送失敗:", err);
+                }
+            } else if (!escortWriter) {
+                alert("3146A 尚未連線！請先授權。");
             }
         }
 
