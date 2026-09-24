@@ -48,13 +48,31 @@
             <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
-            <h2 style="margin-top: 30px;">3146A 控制</h2>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="cmdInput" placeholder="輸入指令 (如 R1)">
-                <button onclick="sendCmd()" class="btn-primary">發送</button>
+            <!-- 新版 3146A 快捷控制面板 -->
+            <h2 style="margin-top: 30px;">3146A 快捷控制</h2>
+            
+            <div style="margin-bottom: 15px; font-size: 14px;">
+                <strong style="color: #555;">讀取與系統：</strong>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
+                    <button onclick="sendEscortCmd('R1')" class="btn-primary" style="padding: 8px 12px; font-size: 14px;">讀取主畫面 (R1)</button>
+                    <button onclick="sendEscortCmd('R2')" class="btn-primary" style="padding: 8px 12px; font-size: 14px;">讀取副畫面 (R2)</button>
+                    <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">重置電表 (RST)</button>
+                </div>
             </div>
+
+            <div style="margin-bottom: 15px; font-size: 14px;">
+                <strong style="color: #555;">功能切換：</strong>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
+                    <button onclick="sendEscortCmd('K1')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">直流電壓 (Vdc)</button>
+                    <button onclick="sendEscortCmd('K2')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">直流電流 (Adc)</button>
+                    <button onclick="sendEscortCmd('K5')" style="background:#6c757d; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">電阻 (Ω)</button>
+                    <button onclick="sendEscortCmd('K8')" style="background:#17a2b8; color:white; padding: 8px 12px; border:none; border-radius:4px; font-size: 14px;">自動量程 (AUTO)</button>
+                </div>
+            </div>
+            
             <div class="display-box">
                 3146A 數值：<strong id="escortValue" style="color:#d9534f;">等待中...</strong>
+                <span id="escortStatus" style="margin-left: 10px; font-size: 14px; color: #007bff;"></span>
             </div>
         </div>
         
@@ -127,7 +145,7 @@
         let csvData = [["Timestamp", "Temperature (°C)", "3146A Value"]]; // CSV 標題
         let lastTemp = "";
         let lastEscort = "";
-        let pollTimer; // 新增：用於 500ms 迴圈的計時器
+        let pollTimer; // 用於 500ms 迴圈的計時器
 
         // 圖表初始化
         const ctx = document.getElementById('tempChart').getContext('2d');
@@ -187,12 +205,12 @@
                 document.getElementById('mainControl').classList.remove("disabled-layer");
                 document.getElementById('stopBtn').style.display = "block";
                 
-                // 🚀 雙方連線後，啟動 500 毫秒同步記錄迴圈
+                // 雙方連線後，啟動 500 毫秒同步記錄迴圈
                 pollTimer = setInterval(syncDataEvery500ms, 500);
             }
         }
 
-        // 🚀 每 500 毫秒被動記錄資料 (不干擾硬體)
+        // 每 500 毫秒被動記錄資料 (不干擾硬體)
         async function syncDataEvery500ms() {
             // 1. 更新溫度圖表
             if (lastTemp !== "") {
@@ -262,7 +280,7 @@
         }
 
         function logData() {
-            // 寫入記憶體中的 CSV 陣列 (加入毫秒以便驗證 0.5 秒取樣率)
+            // 寫入記憶體中的 CSV 陣列 (只保留至秒，無毫秒)
             let now = new Date();
             let timestamp = now.getFullYear() + "-" + 
                            String(now.getMonth()+1).padStart(2,'0') + "-" + 
@@ -295,17 +313,24 @@
             }
         }
 
-        const cmdInput = document.getElementById('cmdInput');
-        cmdInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendCmd();
-        });
-
-        async function sendCmd() {
-            const val = cmdInput.value.trim();
-            if (val && escortWriter) {
+        // 3146A 快捷按鈕發送邏輯
+        async function sendEscortCmd(cmd) {
+            if (!escortWriter) {
+                alert("3146A 尚未連線！請先授權。");
+                return;
+            }
+            try {
                 // 3146A 需帶有 CR+LF 交握
-                await escortWriter.write(`${val}\r\n`);
-                cmdInput.value = '';
+                await escortWriter.write(`${cmd}\r\n`);
+                
+                // 在數值旁邊顯示「已發送」提示，1.5秒後自動消失
+                const statusSpan = document.getElementById('escortStatus');
+                if(statusSpan) {
+                    statusSpan.innerText = `✔️ 發送: ${cmd}`;
+                    setTimeout(() => statusSpan.innerText = "", 1500);
+                }
+            } catch (err) {
+                console.error("3146A 發送失敗:", err);
             }
         }
 
@@ -313,7 +338,7 @@
         async function stopAndDownload() {
             if (!confirm("確定要停止量測並下載 CSV 檔案嗎？")) return;
 
-            // 🚀 停止 500ms 取樣迴圈
+            // 停止 500ms 取樣迴圈
             clearInterval(pollTimer);
 
             // 將陣列轉換為 CSV 字串格式，並加入 BOM 使 Excel 能正確識別 UTF-8
