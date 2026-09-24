@@ -180,8 +180,11 @@
         async function connectEscort() {
             try {
                 escortPort = await navigator.serial.requestPort();
-                // 關鍵：3146A 需要硬體交握
-                await escortPort.open({ baudRate: 9600, flowControl: 'hardware' });
+                // 拿掉內建的硬體交握，改用手動控制腳位
+                await escortPort.open({ baudRate: 9600 });
+                
+                // 🌟 關鍵補強：強制拉高 DTR 與 RTS 腳位，喚醒 RS-232 轉接線
+                await escortPort.setSignals({ dataTerminalReady: true, requestToSend: true });
                 
                 const textEncoder = new TextEncoderStream();
                 textEncoder.readable.pipeTo(escortPort.writable);
