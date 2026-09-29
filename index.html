@@ -293,6 +293,13 @@
         }
 
         async function syncDataEvery500ms() {
+            // 🌟 新增：每 0.5 秒自動要求 3316E 回傳數值
+            if (isProdigitConnected && prodigitWS && prodigitWS.readyState === WebSocket.OPEN) {
+                // 預設為自動讀取電流。如果想改記錄電壓，只需將這裡改成 'MEAS:VOLT?'
+                prodigitWS.send('MEAS:CURR?');
+            }
+
+            // 1. 更新溫度圖表
             if (lastTemp !== "") {
                 chart.data.labels.push(new Date().toLocaleTimeString());
                 chart.data.datasets[0].data.push(lastTemp);
@@ -302,6 +309,8 @@
                 }
                 chart.update();
             }
+            
+            // 2. 將當下的所有數值 (包含剛收到的 3316E 數據) 寫入 CSV
             logData();
         }
 
