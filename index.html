@@ -63,6 +63,16 @@
             </div>
 
             <div style="margin-bottom: 15px; font-size: 14px;">
+                <strong style="color: #555;">預設與準位 (PRES / LEVEL)：</strong>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                    <button onclick="sendProdigitCmd('PRES ON')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES ON</button>
+                    <button onclick="sendProdigitCmd('PRES OFF')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES OFF</button>
+                    <button onclick="sendProdigitCmd('LEVEL HI')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Hi</button>
+                    <button onclick="sendProdigitCmd('LEVEL LO')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Lo</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">模式切換：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('MODE CC')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CC 模式</button>
@@ -159,7 +169,6 @@
         </div>
     </div>
 
-    <!-- 提示表保持不變 -->
     <div class="hint-panel">
         <h2>📖 3146A 指令提示表</h2>
         <div class="hint-grid">
@@ -282,7 +291,6 @@
 
         // ================= 自動取樣與記錄 =================
         async function syncDataEvery500ms() {
-            // 發送雙重讀取指令給 Python 伺服器
             if (isProdigitConnected && prodigitWS && prodigitWS.readyState === WebSocket.OPEN) {
                 prodigitWS.send('READ_V_I');
             }
@@ -341,7 +349,6 @@
         }
 
         function handleProdigitData(text) {
-            // 解析 Python 組合包回傳的 V:xxx,I:yyy
             if (text.startsWith("V:")) {
                 let parts = text.split(",");
                 lastProdigitVolt = parts[0].split(":")[1];
@@ -428,7 +435,6 @@
                 return alert("3316E 尚未連線至背景伺服器！");
             }
             
-            // 組合出如 "CURR 5" 或 "VOLT 12" 的指令
             let cmd = `${type} ${val}`;
             prodigitWS.send(cmd);
             
@@ -439,7 +445,6 @@
             }
         }
 
-        // 3316E 自訂指令發送
         const cmdProdigit = document.getElementById('cmdProdigit');
         if (cmdProdigit) {
             cmdProdigit.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendProdigitCustom(); });
