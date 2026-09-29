@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Serial 硬體監測面板 (三機一體)</title>
+    <title>Web Serial 硬體監測面板 (三機一體 - 混合架構)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
@@ -37,10 +37,10 @@
 
     <!-- 授權連線區塊 -->
     <div class="setup-panel" id="setupPanel">
-        <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino</button>
-        <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A 電表</button>
-        <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 授權連線 3316E 負載</button>
-        <span id="connStatus" style="font-weight:bold; color:#d9534f;">請使用 Chrome 或 Edge 瀏覽器，並依序授權連線。</span>
+        <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino (USB)</button>
+        <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A (USB)</button>
+        <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 連線 3316E 負載 (WebSocket)</button>
+        <span id="connStatus" style="font-weight:bold; color:#d9534f;">3316E 需先啟動 gpib_server.py 才能連線。</span>
     </div>
 
     <div class="container disabled-layer" id="mainControl">
@@ -50,7 +50,7 @@
             <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
-            <!-- 新版 3316E 快捷控制與自訂面板 -->
+            <!-- 3316E 快捷控制與自訂面板 (WebSocket版) -->
             <h2 style="margin-top: 30px;">3316E 控制面板</h2>
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">負載控制與讀取：</strong>
@@ -127,25 +127,69 @@
         </div>
     </div>
 
-    <!-- 省略的提示表為了版面整潔，保留原樣 -->
+    <!-- 提示表 -->
     <div class="hint-panel">
         <h2>📖 3146A 指令提示表</h2>
-        <p style="color:#666;">(此處保留了所有 K/S/R 系列的指令列表提示)</p>
+        <div class="hint-grid">
+            <div class="hint-col">
+                <h3>【K 系列：設定按鍵指令】</h3>
+                <ul>
+                    <li><strong>K1:</strong> 直流電壓 (Vdc)</li>
+                    <li><strong>K2:</strong> 直流電流 (Adc)</li>
+                    <li><strong>K3:</strong> 交流電壓 (Vac)</li>
+                    <li><strong>K4:</strong> 交流電流 (Aac)</li>
+                    <li><strong>K5:</strong> 電阻 (Ω)</li>
+                    <li><strong>K6:</strong> 二極體 (Diode)</li>
+                    <li><strong>K7:</strong> 頻率 (Hz)</li>
+                    <li><strong>K8:</strong> 自動量程 (AUTO)</li>
+                    <li><strong>K9:</strong> 向上 (▲)</li>
+                    <li><strong>K10:</strong> 向下 (▼)</li>
+                    <li><strong>K11:</strong> 最大/最小值 (MinMax)</li>
+                    <li><strong>K12:</strong> 讀值鎖定 (Hold)</li>
+                    <li><strong>K14:</strong> 相對值 (REL)</li>
+                    <li><strong>K15:</strong> Shift</li>
+                    <li><strong>K16:</strong> 2nd (第二功能)</li>
+                </ul>
+            </div>
+            <div class="hint-col">
+                <h3>【S 系列：設定指令】</h3>
+                <ul>
+                    <li><strong>S1:</strong> 設定主顯示區測量功能/量程/速率。</li>
+                    <li><strong>S2:</strong> 設定副顯示區測量功能/量程/速率。</li>
+                    <li><strong>SH:</strong> 設定比較功能 (COMP) 上限值。</li>
+                    <li><strong>SL:</strong> 設定比較功能 (COMP) 下限值。</li>
+                    <li><strong>SR:</strong> 設定相對功能基準值。</li>
+                    <li><strong>SO:</strong> 選擇 dBm 參考阻抗。</li>
+                </ul>
+            </div>
+            <div class="hint-col">
+                <h3>【R 系列：讀取與系統指令】</h3>
+                <ul>
+                    <li><strong>R0:</strong> 讀取當前設定狀態。</li>
+                    <li><strong>R1:</strong> 讀取主顯示區讀值。</li>
+                    <li><strong>R2:</strong> 讀取副顯示區讀值。</li>
+                    <li><strong>RALL:</strong> 連續回傳狀態與讀值。</li>
+                    <li><strong>RST:</strong> 重置為初始狀態。</li>
+                    <li><strong>RV:</strong> 讀取韌體版本與型號。</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 確認瀏覽器是否支援 Web Serial API
         if (!("serial" in navigator)) {
-            alert("你的瀏覽器不支援 Web Serial API。請使用最新版的 Google Chrome 或 Microsoft Edge。");
+            alert("你的瀏覽器不支援 Web Serial API。");
         }
 
-        let arduinoPort, escortPort, prodigitPort;
-        let arduinoWriter, escortWriter, prodigitWriter;
+        let arduinoPort, escortPort;
+        let arduinoWriter, escortWriter;
         let isArduinoConnected = false;
         let isEscortConnected = false;
         let isProdigitConnected = false;
         
-        // CSV 標題新增 3316E 欄位
+        let prodigitWS; // WebSocket 連線變數
+
+        // CSV 標題包含 3316E
         let csvData = [["Timestamp", "Temperature (°C)", "3146A Value", "3316E Value"]]; 
         let lastTemp = "";
         let lastEscort = "";
@@ -160,7 +204,7 @@
             options: { responsive: true, maintainAspectRatio: false, animation: false }
         });
 
-        // ================= 硬體連線邏輯 =================
+        // ================= 硬體連線邏輯 (Web Serial) =================
         async function connectArduino() {
             try {
                 arduinoPort = await navigator.serial.requestPort();
@@ -186,6 +230,8 @@
             try {
                 escortPort = await navigator.serial.requestPort();
                 await escortPort.open({ baudRate: 9600 });
+                
+                // 強制拉高 DTR 與 RTS 腳位
                 await escortPort.setSignals({ dataTerminalReady: true, requestToSend: true });
                 
                 const textEncoder = new TextEncoderStream();
@@ -204,31 +250,35 @@
             }
         }
 
-        // 🌟 新增：3316E 連線邏輯
-        async function connectProdigit() {
-            try {
-                prodigitPort = await navigator.serial.requestPort();
-                await prodigitPort.open({ baudRate: 9600 });
-                await prodigitPort.setSignals({ dataTerminalReady: true, requestToSend: true });
-                
-                const textEncoder = new TextEncoderStream();
-                textEncoder.readable.pipeTo(prodigitPort.writable);
-                prodigitWriter = textEncoder.writable.getWriter();
-
+        // ================= 3316E 連線邏輯 (WebSocket) =================
+        function connectProdigit() {
+            prodigitWS = new WebSocket("ws://localhost:8765");
+            
+            prodigitWS.onopen = function() {
                 isProdigitConnected = true;
-                document.getElementById('btnProdigit').innerText = "✅ 3316E 已連線";
+                document.getElementById('btnProdigit').innerText = "✅ 3316E 已連線 (WS)";
                 document.getElementById('btnProdigit').disabled = true;
                 document.getElementById('btnProdigit').style.background = "#555";
                 checkAllConnected();
+            };
 
-                readLoop(prodigitPort, handleProdigitData);
-            } catch (err) {
-                console.error("3316E 連線失敗:", err);
-            }
+            prodigitWS.onmessage = function(event) {
+                let text = event.data;
+                if (text !== "OK" && !text.startsWith("Error")) {
+                    handleProdigitData(text);
+                } else if (text.startsWith("Error")) {
+                    alert("3316E 通訊錯誤：" + text);
+                }
+            };
+
+            prodigitWS.onerror = function(error) {
+                console.error("WebSocket 連線錯誤:", error);
+                alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。");
+            };
         }
 
+        // ================= 狀態與資料記錄 =================
         function checkAllConnected() {
-            // 只要有任一設備連線，就解鎖面板與啟動計時器 (方便單獨測試)
             if (isArduinoConnected || isEscortConnected || isProdigitConnected) {
                 document.getElementById('mainControl').classList.remove("disabled-layer");
                 document.getElementById('stopBtn').style.display = "block";
@@ -237,7 +287,6 @@
                     pollTimer = setInterval(syncDataEvery500ms, 500);
                 }
             }
-            // 若三台皆連線，隱藏上方連線區塊
             if (isArduinoConnected && isEscortConnected && isProdigitConnected) {
                 document.getElementById('setupPanel').style.display = "none";
             }
@@ -256,7 +305,6 @@
             logData();
         }
 
-        // ================= 讀取迴圈 =================
         async function readLoop(port, callback) {
             while (port.readable) {
                 const textDecoder = new TextDecoderStream();
@@ -285,7 +333,6 @@
             }
         }
 
-        // ================= 資料處理邏輯 =================
         function handleArduinoData(line) {
             if (line.startsWith("Temperature:")) {
                 let temp = parseFloat(line.split(":")[1]);
@@ -308,7 +355,6 @@
             }
         }
 
-        // 🌟 新增：處理 3316E 數據
         function handleProdigitData(line) {
             if (line) {
                 lastProdigit = line;
@@ -324,11 +370,11 @@
                            String(now.getHours()).padStart(2,'0') + ":" + 
                            String(now.getMinutes()).padStart(2,'0') + ":" + 
                            String(now.getSeconds()).padStart(2,'0');
-            // 將 3316E 寫入 CSV 的第四欄
             csvData.push([timestamp, lastTemp, lastEscort, lastProdigit]);
         }
 
         // ================= 發送指令邏輯 =================
+        // Arduino 發送
         async function sendIGBT(state) {
             if (!arduinoWriter) return alert("Arduino 尚未連線！");
             try {
@@ -341,6 +387,7 @@
             } catch (err) { console.error("發送失敗:", err); }
         }
 
+        // 3146A 發送 (Web Serial, 使用 \r)
         async function sendEscortCmd(cmd) {
             if (!escortWriter) return alert("3146A 尚未連線！");
             try {
@@ -372,36 +419,34 @@
             } else if (!escortWriter) { alert("3146A 尚未連線！"); }
         }
 
-        // 🌟 新增：3316E 發送邏輯 (預設使用 \n 換行，若設備沒反應可改為 \r 或 \r\n)
-        async function sendProdigitCmd(cmd) {
-            if (!prodigitWriter) return alert("3316E 尚未連線！");
-            try {
-                await prodigitWriter.write(`${cmd}\n`);
-                const statusSpan = document.getElementById('prodigitStatus');
-                if(statusSpan) {
-                    statusSpan.innerText = `✔️ 發送: ${cmd}`;
-                    setTimeout(() => statusSpan.innerText = "", 1500);
-                }
-            } catch (err) { console.error("3316E 發送失敗:", err); }
+        // 3316E 發送 (WebSocket)
+        function sendProdigitCmd(cmd) {
+            if (!isProdigitConnected || prodigitWS.readyState !== WebSocket.OPEN) {
+                return alert("3316E 尚未連線至背景伺服器！");
+            }
+            prodigitWS.send(cmd);
+            const statusSpan = document.getElementById('prodigitStatus');
+            if(statusSpan) {
+                statusSpan.innerText = `✔️ 發送: ${cmd}`;
+                setTimeout(() => statusSpan.innerText = "", 1500);
+            }
         }
 
         const cmdProdigit = document.getElementById('cmdProdigit');
         if (cmdProdigit) {
             cmdProdigit.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendProdigitCustom(); });
         }
-        async function sendProdigitCustom() {
+        function sendProdigitCustom() {
             const val = cmdProdigit.value.trim();
-            if (val && prodigitWriter) {
-                try {
-                    await prodigitWriter.write(`${val}\n`);
-                    const statusSpan = document.getElementById('prodigitStatus');
-                    if(statusSpan) {
-                        statusSpan.innerText = `✔️ 發送: ${val}`;
-                        setTimeout(() => statusSpan.innerText = "", 1500);
-                    }
-                    cmdProdigit.value = ''; 
-                } catch (err) { console.error("發送失敗:", err); }
-            } else if (!prodigitWriter) { alert("3316E 尚未連線！"); }
+            if (val && isProdigitConnected && prodigitWS.readyState === WebSocket.OPEN) {
+                prodigitWS.send(val);
+                const statusSpan = document.getElementById('prodigitStatus');
+                if(statusSpan) {
+                    statusSpan.innerText = `✔️ 發送: ${val}`;
+                    setTimeout(() => statusSpan.innerText = "", 1500);
+                }
+                cmdProdigit.value = ''; 
+            } else if (!isProdigitConnected) { alert("3316E 尚未連線！"); }
         }
 
         // ================= 停止並匯出 CSV =================
