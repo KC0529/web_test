@@ -10,10 +10,14 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .setup-panel { background: #e2e8f0; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;}
         .container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 350px; }
         button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
         input[type="text"] { padding: 10px; border: 1px solid #ccc; width: 60%; font-size: 16px; border-radius: 4px;}
-        .display-box { margin-top: 15px; padding: 10px; background: #e9ecef; font-family: monospace; font-size: 18px; border-radius: 4px;}
+        .display-box { padding: 15px; background: #e9ecef; font-family: monospace; border-radius: 8px; border: 1px solid #ccc; }
+        .dashboard-grid { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .dashboard-item { flex: 1; min-width: 150px; text-align: center; }
+        .dashboard-title { font-size: 14px; color: #555; margin-bottom: 8px; font-weight: bold; }
+        .dashboard-value { font-size: 24px; font-weight: bold; }
         .btn-stop { background: #d9534f; font-size: 18px; padding: 10px 30px; }
         .btn-primary { background: #007bff; }
         .btn-success { background: #28a745; }
@@ -43,14 +47,18 @@
     </div>
 
     <div class="container disabled-layer" id="mainControl">
-        <div class="panel">
-            <h2>Arduino IGBT</h2>
+        
+        <!-- 左側：控制面板區 -->
+        <div class="panel" style="flex: 1.2;">
+            <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">控制面板</h2>
+            
+            <h3 style="margin-top: 20px;">Arduino IGBT</h3>
             <button onclick="sendIGBT('ON')" style="background:#28a745;">ON</button>
             <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
             <!-- 🌟 3316E 完整控制面板 -->
-            <h2 style="margin-top: 30px;">3316E 負載控制面板</h2>
+            <h3 style="margin-top: 30px;">3316E 負載控制面板</h3>
             
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">開關與短路測試：</strong>
@@ -67,9 +75,8 @@
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('PRES ON')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES ON</button>
                     <button onclick="sendProdigitCmd('PRES OFF')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES OFF</button>
-                    <!-- 假設你測出來是 LEV HIGH，就把這兩行改成這樣： -->
-                    <button onclick="sendProdigitCmd('LEV HIGH')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Hi</button>
-                    <button onclick="sendProdigitCmd('LEV LOW')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Lo</button>
+                    <button onclick="sendProdigitCmd('LEVEL HI')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Hi</button>
+                    <button onclick="sendProdigitCmd('LEVEL LO')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Lo</button>
                 </div>
             </div>
 
@@ -94,11 +101,15 @@
             </div>
 
             <div style="margin-bottom: 15px; font-size: 14px;">
-                <strong style="color: #555;">電流準位快速設定：</strong>
+                <strong style="color: #555;">數值快速設定 (High / Low 準位)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px; align-items: center;">
-                    <input type="text" id="valProdigit" placeholder="輸入電流 (如 2.0)" style="width: 120px; padding: 6px; font-size: 14px;">
-                    <button onclick="setProdigitValue('CURR:HIGH')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">設為 High 電流(A)</button>
-                    <button onclick="setProdigitValue('CURR:LOW')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">設為 Low 電流(A)</button>
+                    <input type="text" id="valProdigit" placeholder="輸入數值" style="width: 100px; padding: 6px; font-size: 14px;">
+                    <button onclick="setProdigitValue('CURR:HIGH')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">CC High (A)</button>
+                    <button onclick="setProdigitValue('CURR:LOW')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">CC Low (A)</button>
+                    <button onclick="setProdigitValue('VOLT:HIGH')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CV High (V)</button>
+                    <button onclick="setProdigitValue('VOLT:LOW')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CV Low (V)</button>
+                    <button onclick="setProdigitValue('RES:HIGH')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CR High (Ω)</button>
+                    <button onclick="setProdigitValue('RES:LOW')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CR Low (Ω)</button>
                 </div>
             </div>
 
@@ -107,16 +118,12 @@
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdProdigit" placeholder="輸入 3316E 指令" style="width: 50%; padding: 6px; font-size: 14px;">
                     <button onclick="sendProdigitCustom()" class="btn-primary" style="padding: 6px 12px; font-size: 14px;">發送</button>
+                    <span id="prodigitStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
-            </div>
-            
-            <div class="display-box">
-                3316E 讀值：<strong id="prodigitValue" style="color:#d9534f;">等待中...</strong>
-                <span id="prodigitStatus" style="margin-left: 10px; font-size: 14px; color: #007bff;"></span>
             </div>
 
             <!-- 3146A 控制面板 -->
-            <h2 style="margin-top: 30px;">3146A 控制面板</h2>
+            <h3 style="margin-top: 30px;">3146A 控制面板</h3>
             
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">讀取與系統 (R 系列)：</strong>
@@ -154,21 +161,38 @@
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdInput" placeholder="輸入其他指令 (如 S1, SH)" style="width: 50%; padding: 6px; font-size: 14px;">
                     <button onclick="sendCmd()" class="btn-primary" style="padding: 6px 12px; font-size: 14px;">發送</button>
+                    <span id="escortStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
-            </div>
-            
-            <div class="display-box">
-                3146A 讀值：<strong id="escortValue" style="color:#d9534f;">等待中...</strong>
-                <span id="escortStatus" style="margin-left: 10px; font-size: 14px; color: #007bff;"></span>
             </div>
         </div>
         
-        <div class="panel" style="flex: 2;">
-            <h2>溫度 (°C): <span id="tempValue" style="color: blue;">--</span></h2>
-            <div style="height: 400px;"><canvas id="tempChart"></canvas></div>
+        <!-- 右側：監測數據與圖表區 -->
+        <div class="panel" style="flex: 1.8; display: flex; flex-direction: column;">
+            <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">即時讀值監測</h2>
+            
+            <!-- 🌟 新增：統一讀值儀表板 -->
+            <div class="dashboard-grid display-box">
+                <div class="dashboard-item" style="border-right: 1px solid #ccc;">
+                    <div class="dashboard-title">IGBT 溫度 (°C)</div>
+                    <div class="dashboard-value" id="tempValue" style="color: blue;">--</div>
+                </div>
+                <div class="dashboard-item" style="border-right: 1px solid #ccc;">
+                    <div class="dashboard-title">3316E 負載 (V / A)</div>
+                    <div class="dashboard-value" id="prodigitValue" style="color: #d9534f;">等待中...</div>
+                </div>
+                <div class="dashboard-item">
+                    <div class="dashboard-title">3146A 萬用表</div>
+                    <div class="dashboard-value" id="escortValue" style="color: #28a745;">等待中...</div>
+                </div>
+            </div>
+
+            <div style="flex: 1; min-height: 400px; margin-top: 10px;">
+                <canvas id="tempChart"></canvas>
+            </div>
         </div>
     </div>
 
+    <!-- 提示表 -->
     <div class="hint-panel">
         <h2>📖 3146A 指令提示表</h2>
         <div class="hint-grid">
