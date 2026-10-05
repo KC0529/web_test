@@ -42,10 +42,13 @@
     <div class="setup-panel" id="setupPanel">
         <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino (USB)</button>
         <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A (USB)</button>
+        
+        <!-- 🌟 動態 VISA 位址輸入框 -->
         <div style="display:flex; align-items:center; gap:8px;">
             <input type="text" id="visaAddress" value="GPIB0::5::INSTR" placeholder="輸入 VISA 位址" style="width: 160px; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
             <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 連線 3316E (WebSocket)</button>
         </div>
+        
         <span id="connStatus" style="font-weight:bold; color:#d9534f;">3316E 需先啟動 gpib_server.py 才能連線。</span>
     </div>
 
@@ -173,7 +176,7 @@
         <div class="panel" style="flex: 1.8; display: flex; flex-direction: column;">
             <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">即時讀值監測</h2>
             
-            <!-- 🌟 新增：統一讀值儀表板 -->
+            <!-- 統一讀值儀表板 -->
             <div class="dashboard-grid display-box">
                 <div class="dashboard-item" style="border-right: 1px solid #ccc;">
                     <div class="dashboard-title">IGBT 溫度 (°C)</div>
@@ -284,14 +287,14 @@
             prodigitWS = new WebSocket("ws://localhost:8765");
             
             prodigitWS.onopen = function() {
-                // 🌟 連線開啟後，第一件事就是把位址傳給 Python
+                // 連線開啟後，第一件事就是把位址傳給 Python
                 prodigitWS.send("CONNECT_VISA:" + visaAddr);
             };
 
             prodigitWS.onmessage = function(event) {
                 let text = event.data;
                 
-                // 🌟 接收 Python 回傳的連線成功確認
+                // 接收 Python 回傳的連線成功確認
                 if (text === "VISA_CONNECTED") {
                     isProdigitConnected = true;
                     document.getElementById('btnProdigit').innerText = `✅ 已連線 (${visaAddr})`;
@@ -302,21 +305,6 @@
                     return;
                 }
 
-                if (text !== "OK" && !text.startsWith("Error")) {
-                    handleProdigitData(text);
-                } else if (text.startsWith("Error")) {
-                    alert("3316E 通訊錯誤：" + text);
-                }
-            };
-
-            prodigitWS.onerror = function(error) {
-                console.error("WebSocket 連線錯誤:", error);
-                alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。");
-            };
-        }
-
-            prodigitWS.onmessage = function(event) {
-                let text = event.data;
                 if (text !== "OK" && !text.startsWith("Error")) {
                     handleProdigitData(text);
                 } else if (text.startsWith("Error")) {
