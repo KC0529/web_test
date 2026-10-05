@@ -42,7 +42,10 @@
     <div class="setup-panel" id="setupPanel">
         <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino (USB)</button>
         <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A (USB)</button>
-        <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 連線 3316E 負載 (WebSocket)</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <input type="text" id="visaAddress" value="GPIB0::5::INSTR" placeholder="輸入 VISA 位址" style="width: 160px; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+            <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 連線 3316E (WebSocket)</button>
+        </div>
         <span id="connStatus" style="font-weight:bold; color:#d9534f;">3316E 需先啟動 gpib_server.py 才能連線。</span>
     </div>
 
@@ -275,15 +278,42 @@
 
         // ================= 3316E 連線邏輯 (WebSocket) =================
         function connectProdigit() {
+            const visaAddr = document.getElementById('visaAddress').value.trim();
+            if(!visaAddr) return alert("請輸入 VISA 位址！");
+
             prodigitWS = new WebSocket("ws://localhost:8765");
             
             prodigitWS.onopen = function() {
-                isProdigitConnected = true;
-                document.getElementById('btnProdigit').innerText = "✅ 3316E 已連線 (WS)";
-                document.getElementById('btnProdigit').disabled = true;
-                document.getElementById('btnProdigit').style.background = "#555";
-                checkAllConnected();
+                // 🌟 連線開啟後，第一件事就是把位址傳給 Python
+                prodigitWS.send("CONNECT_VISA:" + visaAddr);
             };
+
+            prodigitWS.onmessage = function(event) {
+                let text = event.data;
+                
+                // 🌟 接收 Python 回傳的連線成功確認
+                if (text === "VISA_CONNECTED") {
+                    isProdigitConnected = true;
+                    document.getElementById('btnProdigit').innerText = `✅ 已連線 (${visaAddr})`;
+                    document.getElementById('btnProdigit').disabled = true;
+                    document.getElementById('btnProdigit').style.background = "#555";
+                    document.getElementById('visaAddress').disabled = true;
+                    checkAllConnected();
+                    return;
+                }
+
+                if (text !== "OK" && !text.startsWith("Error")) {
+                    handleProdigitData(text);
+                } else if (text.startsWith("Error")) {
+                    alert("3316E 通訊錯誤：" + text);
+                }
+            };
+
+            prodigitWS.onerror = function(error) {
+                console.error("WebSocket 連線錯誤:", error);
+                alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。");
+            };
+        }
 
             prodigitWS.onmessage = function(event) {
                 let text = event.data;
