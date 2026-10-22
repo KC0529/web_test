@@ -40,16 +40,16 @@
 
     <!-- 授權連線區塊 -->
     <div class="setup-panel" id="setupPanel">
-        <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino (僅控制)</button>
+        <button class="btn-success" onclick="connectArduino()" id="btnArduino">🔌 1. 授權連線 Arduino (USB)</button>
         <button class="btn-success" onclick="connectEscort()" id="btnEscort">🔌 2. 授權連線 3146A (USB)</button>
         
-        <!-- 動態 VISA 位址輸入框 -->
+        <!-- 🌟 動態 VISA 位址輸入框 -->
         <div style="display:flex; align-items:center; gap:8px;">
             <input type="text" id="visaAddress" value="GPIB0::5::INSTR" placeholder="輸入 VISA 位址" style="width: 160px; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
             <button class="btn-warning" onclick="connectProdigit()" id="btnProdigit">🔌 3. 連線 3316E (WebSocket)</button>
         </div>
         
-        <span id="connStatus" style="font-weight:bold; color:#007bff;">UT325 溫度由背景自動讀取。</span>
+        <span id="connStatus" style="font-weight:bold; color:#d9534f;">3316E 需先啟動 gpib_server.py 才能連線。</span>
     </div>
 
     <div class="container disabled-layer" id="mainControl">
@@ -63,8 +63,9 @@
             <button onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
-            <!-- 3316E 完整控制面板 -->
+            <!-- 🌟 3316E 完整控制面板 -->
             <h3 style="margin-top: 30px;">3316E 負載控制面板</h3>
+            
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">開關與短路測試：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
@@ -74,6 +75,7 @@
                     <button onclick="sendProdigitCmd('SHORT OFF')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">Short OFF</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">預設與準位 (PRES / LEVEL)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
@@ -83,6 +85,7 @@
                     <button onclick="sendProdigitCmd('LEV LOW')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Lo</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">模式切換：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
@@ -91,6 +94,7 @@
                     <button onclick="sendProdigitCmd('MODE CR')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CR 模式</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">記憶體呼叫 (Recall)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
@@ -101,6 +105,7 @@
                     <button onclick="sendProdigitCmd('*RCL 5')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M5</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">數值快速設定 (High / Low 準位)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px; align-items: center;">
@@ -113,6 +118,7 @@
                     <button onclick="setProdigitValue('RES:LOW')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CR Low (Ω)</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">自訂指令輸入：</strong>
                 <div style="display:flex; gap:10px; margin-top: 8px;">
@@ -124,6 +130,7 @@
 
             <!-- 3146A 控制面板 -->
             <h3 style="margin-top: 30px;">3146A 控制面板</h3>
+            
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">讀取與系統 (R 系列)：</strong>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
@@ -133,6 +140,7 @@
                     <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">重置(RST)</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">功能切換 (K 系列)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
@@ -153,6 +161,7 @@
                     <button onclick="sendEscortCmd('K16')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">2nd</button>
                 </div>
             </div>
+
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">自訂指令輸入：</strong>
                 <div style="display:flex; gap:10px; margin-top: 8px;">
@@ -167,9 +176,10 @@
         <div class="panel" style="flex: 1.8; display: flex; flex-direction: column;">
             <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">即時讀值監測</h2>
             
+            <!-- 統一讀值儀表板 -->
             <div class="dashboard-grid display-box">
                 <div class="dashboard-item" style="border-right: 1px solid #ccc;">
-                    <div class="dashboard-title">UT325 溫度 (°C)</div>
+                    <div class="dashboard-title">IGBT 溫度 (°C)</div>
                     <div class="dashboard-value" id="tempValue" style="color: blue;">--</div>
                 </div>
                 <div class="dashboard-item" style="border-right: 1px solid #ccc;">
@@ -188,36 +198,40 @@
         </div>
     </div>
 
-    <!-- 提示表保持不變... -->
+    <!-- 提示表 -->
     <div class="hint-panel">
         <h2>📖 3146A 指令提示表</h2>
         <div class="hint-grid">
             <div class="hint-col">
                 <h3>【K 系列：設定按鍵指令】</h3>
-                <ul><li><strong>K1:</strong> 直流電壓</li><li><strong>K2:</strong> 直流電流</li><li><strong>K3:</strong> 交流電壓</li><li><strong>K4:</strong> 交流電流</li><li><strong>K5:</strong> 電阻</li></ul>
+                <ul><li><strong>K1:</strong> 直流電壓 (Vdc)</li><li><strong>K2:</strong> 直流電流 (Adc)</li><li><strong>K3:</strong> 交流電壓 (Vac)</li><li><strong>K4:</strong> 交流電流 (Aac)</li><li><strong>K5:</strong> 電阻 (Ω)</li><li><strong>K6:</strong> 二極體 (Diode)</li><li><strong>K7:</strong> 頻率 (Hz)</li><li><strong>K8:</strong> 自動量程 (AUTO)</li><li><strong>K9:</strong> 向上 (▲)</li><li><strong>K10:</strong> 向下 (▼)</li><li><strong>K11:</strong> 最大/最小值 (MinMax)</li><li><strong>K12:</strong> 讀值鎖定 (Hold)</li><li><strong>K14:</strong> 相對值 (REL)</li><li><strong>K15:</strong> Shift</li><li><strong>K16:</strong> 2nd (第二功能)</li></ul>
             </div>
             <div class="hint-col">
                 <h3>【S 系列：設定指令】</h3>
-                <ul><li><strong>S1:</strong> 設定主顯示區</li><li><strong>S2:</strong> 設定副顯示區</li><li><strong>SH:</strong> 比較上限值</li></ul>
+                <ul><li><strong>S1:</strong> 設定主顯示區測量功能/量程/速率。</li><li><strong>S2:</strong> 設定副顯示區測量功能/量程/速率。</li><li><strong>SH:</strong> 設定比較功能 (COMP) 上限值。</li><li><strong>SL:</strong> 設定比較功能 (COMP) 下限值。</li><li><strong>SR:</strong> 設定相對功能基準值。</li><li><strong>SO:</strong> 選擇 dBm 參考阻抗。</li></ul>
             </div>
             <div class="hint-col">
-                <h3>【R 系列：讀取指令】</h3>
-                <ul><li><strong>R0:</strong> 當前狀態</li><li><strong>R1:</strong> 主顯示區讀值</li><li><strong>RST:</strong> 重置</li></ul>
+                <h3>【R 系列：讀取與系統指令】</h3>
+                <ul><li><strong>R0:</strong> 讀取當前設定狀態。</li><li><strong>R1:</strong> 讀取主顯示區讀值。</li><li><strong>R2:</strong> 讀取副顯示區讀值。</li><li><strong>RALL:</strong> 連續回傳狀態與讀值。</li><li><strong>RST:</strong> 重置為初始狀態。</li><li><strong>RV:</strong> 讀取韌體版本與型號。</li></ul>
             </div>
         </div>
     </div>
 
     <script>
-        if (!("serial" in navigator)) { alert("你的瀏覽器不支援 Web Serial API。"); }
+        if (!("serial" in navigator)) {
+            alert("你的瀏覽器不支援 Web Serial API。");
+        }
 
         let arduinoPort, escortPort;
         let arduinoWriter, escortWriter;
         let isArduinoConnected = false;
         let isEscortConnected = false;
         let isProdigitConnected = false;
+        
         let prodigitWS; 
 
-        let csvData = [["Timestamp", "UT325 Temp (°C)", "3146A Value", "3316E Voltage (V)", "3316E Current (A)"]]; 
+        // CSV 標題包含拆分的電壓與電流欄位
+        let csvData = [["Timestamp", "Temperature (°C)", "3146A Value", "3316E Voltage (V)", "3316E Current (A)"]]; 
         let lastTemp = "";
         let lastEscort = "";
         let lastProdigitVolt = "";
@@ -227,33 +241,9 @@
         const ctx = document.getElementById('tempChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'UT325 溫度', data: [], borderColor: 'blue', tension: 0.1 }] },
+            data: { labels: [], datasets: [{ label: '溫度', data: [], borderColor: 'blue', tension: 0.1 }] },
             options: { responsive: true, maintainAspectRatio: false, animation: false }
         });
-
-        // 🌟 自動向本地的 Python API 抓取 UT325 溫度
-        async function fetchUT325Temperature() {
-            try {
-                // 向剛剛啟動的獨立 Python 伺服器發送請求
-                const response = await fetch('http://127.0.0.1:5000/api/data');
-                const data = await response.json();
-                
-                if (data.temperature === 0) {
-                    document.getElementById('tempValue').innerText = '斷線';
-                    document.getElementById('tempValue').style.color = '#7f8c8d';
-                    lastTemp = ""; 
-                } else {
-                    lastTemp = data.temperature;
-                    document.getElementById('tempValue').innerText = data.temperature.toFixed(1);
-                    document.getElementById('tempValue').style.color = 'blue';
-                }
-            } catch (error) {
-                // 若 Python 伺服器沒開，不會阻礙網頁運作
-                document.getElementById('tempValue').innerText = '伺服器未開啟';
-                lastTemp = "";
-            }
-        }
-        setInterval(fetchUT325Temperature, 1000);
 
         // ================= 硬體連線邏輯 (Web Serial) =================
         async function connectArduino() {
@@ -268,8 +258,7 @@
                 document.getElementById('btnArduino').disabled = true;
                 document.getElementById('btnArduino').style.background = "#555";
                 checkAllConnected();
-                // 移除了處理溫度的回呼
-                readLoop(arduinoPort, () => {}); 
+                readLoop(arduinoPort, handleArduinoData);
             } catch (err) { console.error("Arduino 連線失敗:", err); }
         }
 
@@ -296,9 +285,16 @@
             if(!visaAddr) return alert("請輸入 VISA 位址！");
 
             prodigitWS = new WebSocket("ws://localhost:8765");
-            prodigitWS.onopen = function() { prodigitWS.send("CONNECT_VISA:" + visaAddr); };
+            
+            prodigitWS.onopen = function() {
+                // 連線開啟後，第一件事就是把位址傳給 Python
+                prodigitWS.send("CONNECT_VISA:" + visaAddr);
+            };
+
             prodigitWS.onmessage = function(event) {
                 let text = event.data;
+                
+                // 接收 Python 回傳的連線成功確認
                 if (text === "VISA_CONNECTED") {
                     isProdigitConnected = true;
                     document.getElementById('btnProdigit').innerText = `✅ 已連線 (${visaAddr})`;
@@ -308,13 +304,18 @@
                     checkAllConnected();
                     return;
                 }
+
                 if (text !== "OK" && !text.startsWith("Error")) {
                     handleProdigitData(text);
                 } else if (text.startsWith("Error")) {
                     alert("3316E 通訊錯誤：" + text);
                 }
             };
-            prodigitWS.onerror = function(error) { alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。"); };
+
+            prodigitWS.onerror = function(error) {
+                console.error("WebSocket 連線錯誤:", error);
+                alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。");
+            };
         }
 
         function checkAllConnected() {
@@ -369,6 +370,16 @@
             }
         }
 
+        function handleArduinoData(line) {
+            if (line.startsWith("Temperature:")) {
+                let temp = parseFloat(line.split(":")[1]);
+                if (!isNaN(temp)) {
+                    lastTemp = temp;
+                    document.getElementById('tempValue').innerText = temp.toFixed(2);
+                }
+            }
+        }
+
         function handleEscortData(line) {
             if (line) {
                 let displayVal = line;
@@ -416,46 +427,100 @@
 
         async function sendEscortCmd(cmd) {
             if (!escortWriter) return alert("3146A 尚未連線！");
-            try { await escortWriter.write(`${cmd}\r`); } catch (err) { console.error("發送失敗"); }
+            try {
+                await escortWriter.write(`${cmd}\r`);
+                const statusSpan = document.getElementById('escortStatus');
+                if(statusSpan) {
+                    statusSpan.innerText = `✔️ 發送: ${cmd}`;
+                    setTimeout(() => statusSpan.innerText = "", 1500);
+                }
+            } catch (err) { console.error("3146A 發送失敗:", err); }
         }
 
-        function sendCmd() {
-            const val = document.getElementById('cmdInput').value.trim();
+        const cmdInput = document.getElementById('cmdInput');
+        if (cmdInput) {
+            cmdInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendCmd(); });
+        }
+        async function sendCmd() {
+            const val = cmdInput.value.trim();
             if (val && escortWriter) {
-                escortWriter.write(`${val}\r`);
-                document.getElementById('cmdInput').value = ''; 
+                try {
+                    await escortWriter.write(`${val}\r`);
+                    const statusSpan = document.getElementById('escortStatus');
+                    if(statusSpan) {
+                        statusSpan.innerText = `✔️ 發送: ${val}`;
+                        setTimeout(() => statusSpan.innerText = "", 1500);
+                    }
+                    cmdInput.value = ''; 
+                } catch (err) { console.error("發送失敗:", err); }
+            } else if (!escortWriter) { alert("3146A 尚未連線！"); }
+        }
+
+        // 🌟 3316E 按鈕發送
+        function sendProdigitCmd(cmd) {
+            if (!isProdigitConnected || prodigitWS.readyState !== WebSocket.OPEN) {
+                return alert("3316E 尚未連線至背景伺服器！");
+            }
+            prodigitWS.send(cmd);
+            const statusSpan = document.getElementById('prodigitStatus');
+            if(statusSpan) {
+                statusSpan.innerText = `✔️ 發送: ${cmd}`;
+                setTimeout(() => statusSpan.innerText = "", 1500);
             }
         }
 
-        function sendProdigitCmd(cmd) {
-            if (isProdigitConnected && prodigitWS.readyState === WebSocket.OPEN) prodigitWS.send(cmd);
-        }
-
+        // 🌟 3316E 數值快速設定
         function setProdigitValue(type) {
             const val = document.getElementById('valProdigit').value.trim();
-            if (val && isProdigitConnected) prodigitWS.send(`${type} ${val}`);
-        }
-
-        function sendProdigitCustom() {
-            const val = document.getElementById('cmdProdigit').value.trim();
-            if (val && isProdigitConnected) {
-                prodigitWS.send(val);
-                document.getElementById('cmdProdigit').value = '';
+            if (!val) return alert("請先輸入數值！");
+            if (!isProdigitConnected || prodigitWS.readyState !== WebSocket.OPEN) {
+                return alert("3316E 尚未連線至背景伺服器！");
+            }
+            
+            let cmd = `${type} ${val}`;
+            prodigitWS.send(cmd);
+            
+            const statusSpan = document.getElementById('prodigitStatus');
+            if(statusSpan) {
+                statusSpan.innerText = `✔️ 設定: ${cmd}`;
+                setTimeout(() => statusSpan.innerText = "", 1500);
             }
         }
 
+        const cmdProdigit = document.getElementById('cmdProdigit');
+        if (cmdProdigit) {
+            cmdProdigit.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendProdigitCustom(); });
+        }
+        function sendProdigitCustom() {
+            const val = cmdProdigit.value.trim();
+            if (val && isProdigitConnected && prodigitWS.readyState === WebSocket.OPEN) {
+                prodigitWS.send(val);
+                const statusSpan = document.getElementById('prodigitStatus');
+                if(statusSpan) {
+                    statusSpan.innerText = `✔️ 發送: ${val}`;
+                    setTimeout(() => statusSpan.innerText = "", 1500);
+                }
+                cmdProdigit.value = ''; 
+            } else if (!isProdigitConnected) { alert("3316E 尚未連線！"); }
+        }
+
+        // ================= 停止並匯出 CSV =================
         async function stopAndDownload() {
-            if (!confirm("確定要停止並下載 CSV 嗎？")) return;
+            if (!confirm("確定要停止量測並下載 CSV 檔案嗎？")) return;
             clearInterval(pollTimer);
             let csvContent = "\uFEFF" + csvData.map(e => e.join(",")).join("\n");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `三機整合測試紀錄_${new Date().getTime()}.csv`;
+            link.setAttribute("href", url);
+            let filename = `硬體測試紀錄_${new Date().getTime()}.csv`;
+            link.setAttribute("download", filename);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            alert("資料已開始下載。請重新整理網頁以開始新的量測。");
             document.getElementById('mainControl').classList.add("disabled-layer");
+            document.getElementById('stopBtn').disabled = true;
         }
     </script>
 </body>
