@@ -13,7 +13,6 @@
         .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 350px; }
         button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
         input[type="text"] { padding: 10px; border: 1px solid #ccc; width: 60%; font-size: 16px; border-radius: 4px;}
-        .btn-igbt {min-width: 80px;   /* 寬度 */min-height: 44px;  /* 高度 */font-size: 16px;  /* 字體大小 */line-height: 1.5;}
         .display-box { padding: 15px; background: #e9ecef; font-family: monospace; border-radius: 8px; border: 1px solid #ccc; }
         .dashboard-grid { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .dashboard-item { flex: 1; min-width: 150px; text-align: center; }
@@ -60,9 +59,8 @@
             <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">控制面板</h2>
             
             <h3 style="margin-top: 20px;">Arduino IGBT</h3>
-            <button class="btn-igbt" onclick="sendIGBT('ON')" style="background:#28a745;">ON</button>
-            <button class="btn-igbt" onclick="sendIGBT('OFF')" style="background:#d9534f;">OFF</button>
-            <span id="igbtStatus" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
+            <button id="igbtToggle" type="button" onclick="toggleIGBT()" aria-label="傳送 IGBT ON 指令" title="按下送出 ON；送出後按鈕會改為 OFF" style="background:#28a745; font-size:24px; padding:18px 40px; min-width:130px; border-radius:8px;">ON</button>
+            <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
 
             <!-- 3316E 完整控制面板 -->
             <h3 style="margin-top: 30px;">3316E 負載控制面板</h3>
@@ -403,16 +401,56 @@
         }
 
         // ================= 發送指令邏輯 =================
+        // 按鈕文字表示下一次按下要送出的指令，不代表硬體回報狀態。
+        let igbtNextCommand = 'ON';
+        let igbtCommandPending = false;
+        let igbtStatusTimer = null;
+
+        async function toggleIGBT() {
+            return sendIGBT(igbtNextCommand);
+        }
+
         async function sendIGBT(state) {
-            if (!arduinoWriter) return alert("Arduino 尚未連線！");
+            if (igbtCommandPending) return false;
+            if (!isArduinoConnected || !arduinoWriter) {
+                alert("Arduino 尚未連線！");
+                return false;
+            }
+            const command = state.toUpperCase();
+            if (command !== 'ON' && command !== 'OFF') return false;
+            const button = document.getElementById('igbtToggle');
+            const statusSpan = document.getElementById('igbtStatus');
+            igbtCommandPending = true;
+            if (button) button.disabled = true;
+            if (igbtStatusTimer !== null) {
+                clearTimeout(igbtStatusTimer);
+                igbtStatusTimer = null;
+            }
             try {
-                await arduinoWriter.write(`${state.toUpperCase()}\r\n`);
-                const statusSpan = document.getElementById('igbtStatus');
-                if(statusSpan) {
-                    statusSpan.innerText = `✔️ 已傳送: ${state}`;
-                    setTimeout(() => statusSpan.innerText = "", 2000);
+                await arduinoWriter.write(`${command}\r\n`);
+                igbtNextCommand = command === 'ON' ? 'OFF' : 'ON';
+                if (button) {
+                    button.innerText = igbtNextCommand;
+                    button.style.background = igbtNextCommand === 'ON' ? '#28a745' : '#d9534f';
+                    button.setAttribute('aria-label', `傳送 IGBT ${igbtNextCommand} 指令`);
+                    button.title = `按下送出 ${igbtNextCommand}；送出後按鈕會改為 ${command}`;
                 }
-            } catch (err) { console.error("發送失敗:", err); }
+                if (statusSpan) {
+                    statusSpan.innerText = `✔️ 已傳送: ${command}`;
+                    igbtStatusTimer = setTimeout(() => {
+                        statusSpan.innerText = '';
+                        igbtStatusTimer = null;
+                    }, 2000);
+                }
+                return true;
+            } catch (err) {
+                console.error("發送失敗:", err);
+                if (statusSpan) statusSpan.innerText = '傳送失敗，請檢查 Arduino 連線後重試。';
+                return false;
+            } finally {
+                igbtCommandPending = false;
+                if (button) button.disabled = false;
+            }
         }
 
         async function sendEscortCmd(cmd) {
