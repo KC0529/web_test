@@ -67,19 +67,15 @@
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">開關與短路測試：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
-                    <button onclick="sendProdigitCmd('LOAD ON')" style="background:#28a745; padding: 6px 10px; font-size: 13px;">Load ON</button>
-                    <button onclick="sendProdigitCmd('LOAD OFF')" style="background:#d9534f; padding: 6px 10px; font-size: 13px;">Load OFF</button>
-                    <button onclick="sendProdigitCmd('SHORT ON')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">Short ON</button>
-                    <button onclick="sendProdigitCmd('SHORT OFF')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">Short OFF</button>
+                    <button id="loadToggle" type="button" onclick="toggleProdigitControl('LOAD')" aria-label="傳送 LOAD ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#28a745; color:white; padding:6px 10px; font-size:13px; min-width:100px;">Load ON</button>
+                    <button id="shortToggle" type="button" onclick="toggleProdigitControl('SHORT')" aria-label="傳送 SHORT ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">Short ON</button>
                 </div>
             </div>
             <div style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">預設與準位 (PRES / LEVEL)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
-                    <button onclick="sendProdigitCmd('PRES ON')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES ON</button>
-                    <button onclick="sendProdigitCmd('PRES OFF')" style="background:#ffc107; color:black; padding: 6px 10px; font-size: 13px;">PRES OFF</button>
-                    <button onclick="sendProdigitCmd('LEV HIGH')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Hi</button>
-                    <button onclick="sendProdigitCmd('LEV LOW')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">LEVEL Lo</button>
+                    <button id="presToggle" type="button" onclick="toggleProdigitControl('PRES')" aria-label="傳送 PRES ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">PRES ON</button>
+                    <button id="levelToggle" type="button" onclick="toggleProdigitControl('LEV')" aria-label="傳送 LEV HIGH 指令" title="按鈕顯示下一次要送出的指令" style="background:#6c757d; color:white; padding:6px 10px; font-size:13px; min-width:100px;">LEVEL Hi</button>
                 </div>
             </div>
             <div style="margin-bottom: 15px; font-size: 14px;">
@@ -466,8 +462,42 @@
             }
         }
 
+        // 每顆按鈕記錄下一次要送出的指令；不將介面切換當成儀器狀態回報。
+        const prodigitToggleControls = {
+            LOAD: { id: 'loadToggle', labels: ['Load ON', 'Load OFF'], commands: ['LOAD ON', 'LOAD OFF'], colors: ['#28a745', '#d9534f'], textColors: ['white', 'white'], next: 0 },
+            SHORT: { id: 'shortToggle', labels: ['Short ON', 'Short OFF'], commands: ['SHORT ON', 'SHORT OFF'], colors: ['#ffc107', '#ffc107'], textColors: ['black', 'black'], next: 0 },
+            PRES: { id: 'presToggle', labels: ['PRES ON', 'PRES OFF'], commands: ['PRES ON', 'PRES OFF'], colors: ['#ffc107', '#ffc107'], textColors: ['black', 'black'], next: 0 },
+            LEV: { id: 'levelToggle', labels: ['LEVEL Hi', 'LEVEL Lo'], commands: ['LEV HIGH', 'LEV LOW'], colors: ['#6c757d', '#6c757d'], textColors: ['white', 'white'], next: 0 }
+        };
+
+        function toggleProdigitControl(key) {
+            if (!Object.prototype.hasOwnProperty.call(prodigitToggleControls, key)) return false;
+            const control = prodigitToggleControls[key];
+            if (!sendProdigitCmd(control.commands[control.next])) return false;
+            control.next = 1 - control.next;
+            const button = document.getElementById(control.id);
+            if (button) {
+                button.innerText = control.labels[control.next];
+                button.style.background = control.colors[control.next];
+                button.style.color = control.textColors[control.next];
+                button.setAttribute('aria-label', `傳送 ${control.commands[control.next]} 指令`);
+            }
+            return true;
+        }
+
         function sendProdigitCmd(cmd) {
-            if (isProdigitConnected && prodigitWS.readyState === WebSocket.OPEN) prodigitWS.send(cmd);
+            if (!isProdigitConnected || !prodigitWS || prodigitWS.readyState !== WebSocket.OPEN) {
+                alert('3316E 尚未連線，請先連線電子負載。');
+                return false;
+            }
+            try {
+                prodigitWS.send(cmd);
+                return true;
+            } catch (err) {
+                console.error('3316E 指令傳送失敗:', err);
+                alert('3316E 指令傳送失敗，請檢查連線後重試。');
+                return false;
+            }
         }
 
         function setProdigitValue(type) {
