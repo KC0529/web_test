@@ -30,6 +30,76 @@
         .hint-col h3 { margin-top: 0; color: #007bff; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
         .hint-col ul { list-style: none; padding-left: 0; margin: 0; font-size: 14px; line-height: 1.6; color: #444; }
         .hint-col li { margin-bottom: 6px; }
+
+        /* 緊湊控制區：僅調整外觀，保留所有指令與切換邏輯。 */
+        #mainControl { align-items: flex-start; }
+        .control-panel { box-sizing: border-box; container-type: inline-size; padding: 18px; }
+        .control-panel > h2 { margin-bottom: 12px; font-size: 21px; color: #243449; }
+        .control-panel .instrument-card { margin: 0 0 12px; }
+        .control-panel .instrument-card:last-child { margin-bottom: 0; }
+        .control-panel h3 { margin: 0 0 10px !important; font-size: 16px; color: #263b53; }
+        .control-panel .instrument-card > h3 {
+            padding-left: 9px; border-left: 3px solid #3284d6;
+            line-height: 1.25;
+        }
+        .control-panel .igbt-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px; padding: 10px 12px;
+            border: 1px solid #dbe8df; border-radius: 10px; background: #f2f8f4;
+        }
+        .control-panel .igbt-toolbar h3 { margin: 0 !important; }
+        .control-panel .igbt-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .control-panel #igbtToggle {
+            min-width: 108px !important; min-height: 48px;
+            padding: 10px 28px !important; font-size: 22px !important;
+        }
+        .control-panel #igbtStatus { margin-left: 0 !important; font-size: 12px; }
+        .control-panel .control-grid {
+            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+        }
+        .control-panel .control-group {
+            min-width: 0; margin: 0 !important; padding: 10px;
+            border: 1px solid #e1e7ee; border-radius: 9px; background: #f7f9fc;
+        }
+        .control-panel .control-wide { grid-column: 1 / -1; }
+        .control-panel .control-group > strong {
+            display: block; color: #536278 !important; font-size: 12px;
+            font-weight: 600; line-height: 1.4;
+        }
+        .control-panel .control-group > div {
+            margin-top: 7px !important; gap: 6px !important;
+            align-items: center; flex-wrap: wrap;
+        }
+        .control-panel .control-group button {
+            min-height: 32px; padding: 6px 10px !important;
+            font-size: 12px !important; border-radius: 5px;
+            white-space: nowrap; line-height: 1.35;
+        }
+        .control-panel button { transition: box-shadow .15s, filter .15s; }
+        .control-panel button:hover { filter: brightness(.96); box-shadow: 0 2px 5px #23354b20; }
+        .control-panel button:focus-visible, .control-panel input:focus-visible {
+            outline: 3px solid #2584db; outline-offset: 2px;
+        }
+        .control-panel input[type="text"] {
+            box-sizing: border-box; min-width: 0; max-width: 100%; min-height: 34px;
+            font-size: 13px !important; padding: 7px 9px !important;
+            border-color: #d1dae5; border-radius: 5px; background: white;
+        }
+        .control-panel #valProdigit { width: 94px !important; }
+        .control-panel #cmdProdigit, .control-panel #cmdInput { flex: 1 1 180px; width: auto !important; }
+        .control-panel #prodigitStatus, .control-panel #escortStatus {
+            margin-left: 0 !important; line-height: 1.4 !important;
+            font-size: 12px !important; overflow-wrap: anywhere;
+        }
+        .control-panel #prodigitStatus:empty, .control-panel #escortStatus:empty,
+        .control-panel #igbtStatus:empty { display: none; }
+        @container (max-width: 460px) {
+            .control-panel .control-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+        @media (max-width: 600px) {
+            #mainControl > .panel { min-width: 0; width: 100%; flex-basis: 100% !important; }
+            .control-panel { padding: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -55,30 +125,35 @@
     <div class="container disabled-layer" id="mainControl">
         
         <!-- 左側：控制面板區 -->
-        <div class="panel" style="flex: 1.2;">
+        <div class="panel control-panel" style="flex: 1.2;">
             <h2 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">控制面板</h2>
             
+<section class="instrument-card igbt-toolbar">
             <h3 style="margin-top: 20px;">Arduino IGBT</h3>
+            <div class="igbt-actions">
             <button id="igbtToggle" type="button" onclick="toggleIGBT()" aria-label="傳送 IGBT ON 指令" title="按下送出 ON；送出後按鈕會改為 OFF" style="background:#28a745; font-size:24px; padding:18px 40px; min-width:130px; border-radius:8px;">ON</button>
             <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
-
+            </div>
+            </section>
+<section class="instrument-card">
             <!-- 3316E 完整控制面板 -->
             <h3 style="margin-top: 30px;">3316E 負載控制面板</h3>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-grid">
+            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">開關與短路測試：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button id="loadToggle" type="button" onclick="toggleProdigitControl('LOAD')" aria-label="傳送 LOAD ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#28a745; color:white; padding:6px 10px; font-size:13px; min-width:100px;">Load ON</button>
                     <button id="shortToggle" type="button" onclick="toggleProdigitControl('SHORT')" aria-label="傳送 SHORT ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">Short ON</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">預設與準位 (PRES / LEVEL)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
-                    <button id="presToggle" type="button" onclick="toggleProdigitControl('PRES')" aria-label="傳送 PRES ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">設定顯示 ON</button>
+                    <button id="presToggle" type="button" onclick="toggleProdigitControl('PRES')" aria-label="傳送 PRES ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">PRES ON</button>
                     <button id="levelToggle" type="button" onclick="toggleProdigitControl('LEV')" aria-label="傳送 LEV HIGH 指令" title="按鈕顯示下一次要送出的指令" style="background:#6c757d; color:white; padding:6px 10px; font-size:13px; min-width:100px;">LEVEL Hi</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">模式切換：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('MODE CC')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CC 模式</button>
@@ -86,7 +161,7 @@
                     <button onclick="sendProdigitCmd('MODE CR')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CR 模式</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">記憶體呼叫 (Recall)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('*RCL 1')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M1</button>
@@ -96,7 +171,7 @@
                     <button onclick="sendProdigitCmd('*RCL 5')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M5</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">數值快速設定 (High / Low 準位)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px; align-items: center;">
                     <input type="text" id="valProdigit" placeholder="輸入數值" style="width: 100px; padding: 6px; font-size: 14px;">
@@ -108,7 +183,7 @@
                     <button onclick="setProdigitValue('RES:LOW')" style="background:#ffc107; color:black; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">CR Low (Ω)</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">自訂指令輸入：</strong>
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdProdigit" placeholder="輸入 3316E 指令" style="width: 50%; padding: 6px; font-size: 14px;">
@@ -116,10 +191,13 @@
                     <span id="prodigitStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
             </div>
-
+            </div>
+            </section>
+<section class="instrument-card">
             <!-- 3146A 控制面板 -->
             <h3 style="margin-top: 30px;">3146A 控制面板</h3>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-grid">
+            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">讀取與系統 (R 系列)：</strong>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendEscortCmd('R0')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">狀態(R0)</button>
@@ -128,7 +206,7 @@
                     <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">重置(RST)</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">功能切換 (K 系列)：</strong>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendEscortCmd('K1')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Vdc</button>
@@ -148,7 +226,7 @@
                     <button onclick="sendEscortCmd('K16')" style="background:#28a745; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">2nd</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">自訂指令輸入：</strong>
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdInput" placeholder="輸入其他指令 (如 S1, SH)" style="width: 50%; padding: 6px; font-size: 14px;">
@@ -156,6 +234,9 @@
                     <span id="escortStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
             </div>
+            </div>
+            </section>
+
         </div>
         
         <!-- 右側：監測數據與圖表區 -->
