@@ -129,6 +129,48 @@
             .monitor-panel .dashboard-value { font-size: 30px; }
             .monitor-panel .temperature-chart { height: 240px; }
         }
+        /* 1109：放大操作介面與圖表，保留緊湊分組。 */
+        button { font-size: 18px; min-height: 46px; }
+        .setup-panel button { font-size: 17px !important; padding: 12px 18px !important; }
+        .setup-panel > div { flex-wrap: wrap; max-width: 100%; }
+        .setup-panel input[type="text"] {
+            box-sizing: border-box; width: 220px !important; max-width: 100%;
+            min-height: 48px; font-size: 17px !important; padding: 10px 12px !important;
+        }
+        .control-panel > h2, .monitor-panel > h2 { font-size: 26px; }
+        .control-panel h3 { font-size: 20px; }
+        .control-panel .control-grid { gap: 10px; }
+        .control-panel .control-group { padding: 12px; }
+        .control-panel .control-group > strong { font-size: 15px; }
+        .control-panel .control-group > div { gap: 8px !important; }
+        .control-panel .control-group button {
+            min-height: 46px; font-size: 17px !important;
+            padding: 10px 15px !important; border-radius: 7px;
+        }
+        .control-panel #igbtToggle {
+            min-width: 150px !important; min-height: 72px;
+            font-size: 32px !important; padding: 14px 38px !important;
+        }
+        .control-panel input[type="text"] {
+            min-height: 48px; font-size: 17px !important;
+            padding: 10px 12px !important;
+        }
+        .control-panel #valProdigit { width: 150px !important; }
+        .control-panel #cmdProdigit, .control-panel #cmdInput { flex-basis: 220px; }
+        .control-panel #igbtStatus, .control-panel #prodigitStatus,
+        .control-panel #escortStatus { font-size: 15px !important; }
+        .monitor-panel .dashboard-title { font-size: 18px; }
+        .monitor-panel .dashboard-value { font-size: clamp(32px, 2.8vw, 42px); }
+        .monitor-panel .chart-note { font-size: 15px; margin-bottom: 10px; }
+        .monitor-panel .temperature-chart { height: 440px; }
+        @container (max-width: 560px) {
+            .control-panel .control-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .header { flex-wrap: wrap; gap: 10px; }
+            .monitor-panel .temperature-chart { height: 340px; }
+            .monitor-panel .dashboard-value { font-size: 34px; }
+        }
     </style>
 </head>
 <body>
@@ -287,7 +329,7 @@
                 </div>
             </div>
 
-            <p class="chart-note"></p>
+            <p class="chart-note">溫度曲線顯示最近 15 筆；CSV 保留完整記錄</p>
             <div class="temperature-chart">
                 <canvas id="tempChart"></canvas>
             </div>
@@ -337,10 +379,10 @@
             options: {
                 responsive: true, maintainAspectRatio: false, animation: false,
                 scales: {
-                    x: { ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
-                    y: { ticks: { maxTicksLimit: 5 } }
+                    x: { ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0, font: { size: 16 } } },
+                    y: { ticks: { maxTicksLimit: 5, font: { size: 16 } } }
                 },
-                plugins: { legend: { labels: { font: { size: 13 } } } }
+                plugins: { legend: { labels: { font: { size: 16 }, padding: 18 } }, tooltip: { titleFont: { size: 16 }, bodyFont: { size: 16 } } }
             }
         });
 
