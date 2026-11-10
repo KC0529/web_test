@@ -92,10 +92,6 @@
         .control-panel .command-group { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 6px; }
         .control-panel .command-group > div { margin-top: 0 !important; }
         .control-panel #cmdProdigit, .control-panel #cmdInput { flex: 1 1 100px; width: auto !important; }
-        #igbtStatus, #prodigitStatus, #escortStatus {
-            margin-left: 0 !important; font-size: 12px !important; line-height: 1.4 !important; overflow-wrap: anywhere;
-        }
-        #igbtStatus:empty, #prodigitStatus:empty, #escortStatus:empty { display: none; }
         .monitor-panel { display: flex; flex-direction: column; gap: 8px; }
         .monitor-panel .dashboard-grid {
             display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr));
@@ -179,9 +175,23 @@
         @media (max-width: 650px) {
             .monitor-panel .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
         }
+
+        /* 所有手動指令共用右上角提示，不占控制區空間。 */
+        .command-feedback {
+            position: fixed; top: 12px; right: 12px; z-index: 1000;
+            width: max-content; max-width: min(480px, calc(100vw - 24px));
+            padding: 12px 16px; border: 1px solid #b8dfc5; border-left: 5px solid #22863a;
+            border-radius: 8px; background: #effaf2; color: #16552b;
+            box-shadow: 0 4px 16px #1b304626; font-size: 15px; font-weight: 700;
+            line-height: 1.5; overflow-wrap: anywhere; pointer-events: none;
+        }
+        .command-feedback[hidden] { display: none; }
+        .command-feedback[data-kind="error"] { background: #fff1f1; color: #9f2424; border-color: #edb9b9; border-left-color: #c83c3c; }
+        .command-feedback[data-kind="warning"] { background: #fffaeb; color: #875b08; border-color: #eed59f; border-left-color: #c68a17; }
     </style>
 </head>
 <body>
+    <div id="commandFeedback" class="command-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div class="header">
         <h1>Web Serial 硬體監測面板</h1>
         <button class="btn-stop" onclick="stopAndDownload()" id="stopBtn" style="display:none;">⏹ 停止並下載 CSV</button>
@@ -212,7 +222,6 @@
             <h3 style="margin-top: 20px;">Arduino IGBT</h3>
             <div class="igbt-actions">
             <button id="igbtToggle" type="button" onclick="toggleIGBT()" aria-label="傳送 IGBT ON 指令" title="按下送出 ON；送出後按鈕會改為 OFF" style="background:#28a745; font-size:24px; padding:18px 40px; min-width:130px; border-radius:8px;">ON</button>
-            <span id="igbtStatus" style="margin-left: 10px; font-weight: bold; color: #007bff;"></span>
             </div>
             </section>
 </div>
@@ -269,7 +278,6 @@
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdProdigit" placeholder="輸入 3316E 指令" style="width: 50%; padding: 6px; font-size: 14px;">
                     <button onclick="sendProdigitCustom()" class="btn-primary" style="padding: 6px 12px; font-size: 14px;">發送</button>
-                    <span id="prodigitStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
             </div>
             </div>
@@ -312,7 +320,6 @@
                 <div style="display:flex; gap:10px; margin-top: 8px;">
                     <input type="text" id="cmdInput" placeholder="輸入其他指令 (如 S1, SH)" style="width: 50%; padding: 6px; font-size: 14px;">
                     <button onclick="sendCmd()" class="btn-primary" style="padding: 6px 12px; font-size: 14px;">發送</button>
-                    <span id="escortStatus" style="line-height: 32px; margin-left: 10px; font-size: 14px; color: #007bff; font-weight: bold;"></span>
                 </div>
             </div>
             </div>
@@ -477,7 +484,7 @@
                 if (text !== "OK" && !text.startsWith("Error")) {
                     handleProdigitData(text);
                 } else if (text.startsWith("Error")) {
-                    alert("3316E 通訊錯誤：" + text);
+                    showCommandFeedback('3316E', '背景服務回覆', 'error', text);
                 }
             };
             prodigitWS.onerror = function(error) { alert("無法連線至背景伺服器！請確認 gpib_server.py 是否正在執行。"); };
@@ -567,11 +574,31 @@
             csvData.push([timestamp, lastTemp, lastEscort, lastProdigitVolt, lastProdigitCurr]);
         }
 
-        // ================= 發送指令邏輯 =================
-        // 按鈕文字表示下一次按下要送出的指令，不代表硬體回報狀態。
+        // ================= 發送指令與統一操作訊息 =================
+        let commandFeedbackTimer = null;
+        let commandFeedbackVersion = 0;
+
+        function showCommandFeedback(device, command, kind = 'sent', detail = '') {
+            const box = document.getElementById('commandFeedback');
+            if (commandFeedbackTimer !== null) clearTimeout(commandFeedbackTimer);
+            const version = ++commandFeedbackVersion;
+            const labels = {sent: '已送出', queued: '已送至背景服務', error: '傳送失敗', warning: '尚未送出'};
+            const icon = kind === 'error' ? '✕' : kind === 'warning' ? '⚠' : '✓';
+            // textContent keeps custom command strings as plain text.
+            box.textContent = `${icon} ${device}｜${command}｜${labels[kind] || labels.sent}${detail ? '：' + detail : ''}`;
+            box.dataset.kind = kind;
+            box.hidden = false;
+            commandFeedbackTimer = setTimeout(() => {
+                // An older command's timeout must never hide a newer message.
+                if (version !== commandFeedbackVersion) return;
+                box.hidden = true;
+                commandFeedbackTimer = null;
+            }, kind === 'error' ? 6000 : 4000);
+        }
+
+        // 按鈕文字表示下一次要送出的指令，不代表硬體回報狀態。
         let igbtNextCommand = 'ON';
         let igbtCommandPending = false;
-        let igbtStatusTimer = null;
 
         async function toggleIGBT() {
             return sendIGBT(igbtNextCommand);
@@ -579,20 +606,15 @@
 
         async function sendIGBT(state) {
             if (igbtCommandPending) return false;
-            if (!isArduinoConnected || !arduinoWriter) {
-                alert("Arduino 尚未連線！");
-                return false;
-            }
             const command = state.toUpperCase();
             if (command !== 'ON' && command !== 'OFF') return false;
+            if (!isArduinoConnected || !arduinoWriter) {
+                showCommandFeedback('Arduino IGBT', command, 'warning', 'Arduino 尚未連線');
+                return false;
+            }
             const button = document.getElementById('igbtToggle');
-            const statusSpan = document.getElementById('igbtStatus');
             igbtCommandPending = true;
             if (button) button.disabled = true;
-            if (igbtStatusTimer !== null) {
-                clearTimeout(igbtStatusTimer);
-                igbtStatusTimer = null;
-            }
             try {
                 await arduinoWriter.write(`${command}\r\n`);
                 igbtNextCommand = command === 'ON' ? 'OFF' : 'ON';
@@ -602,17 +624,11 @@
                     button.setAttribute('aria-label', `傳送 IGBT ${igbtNextCommand} 指令`);
                     button.title = `按下送出 ${igbtNextCommand}；送出後按鈕會改為 ${command}`;
                 }
-                if (statusSpan) {
-                    statusSpan.innerText = `✔️ 已傳送: ${command}`;
-                    igbtStatusTimer = setTimeout(() => {
-                        statusSpan.innerText = '';
-                        igbtStatusTimer = null;
-                    }, 2000);
-                }
+                showCommandFeedback('Arduino IGBT', command);
                 return true;
             } catch (err) {
-                console.error("發送失敗:", err);
-                if (statusSpan) statusSpan.innerText = '傳送失敗，請檢查 Arduino 連線後重試。';
+                console.error('Arduino 傳送失敗:', err);
+                showCommandFeedback('Arduino IGBT', command, 'error', '請檢查連線後重試');
                 return false;
             } finally {
                 igbtCommandPending = false;
@@ -621,16 +637,32 @@
         }
 
         async function sendEscortCmd(cmd) {
-            if (!escortWriter) return alert("3146A 尚未連線！");
-            try { await escortWriter.write(`${cmd}\r`); } catch (err) { console.error("發送失敗"); }
+            if (!escortWriter) {
+                showCommandFeedback('3146A', cmd, 'warning', '3146A 尚未連線');
+                return false;
+            }
+            try {
+                await escortWriter.write(`${cmd}\r`);
+                showCommandFeedback('3146A', cmd);
+                return true;
+            } catch (err) {
+                console.error('3146A 傳送失敗:', err);
+                showCommandFeedback('3146A', cmd, 'error', '請檢查連線後重試');
+                return false;
+            }
         }
 
-        function sendCmd() {
-            const val = document.getElementById('cmdInput').value.trim();
-            if (val && escortWriter) {
-                escortWriter.write(`${val}\r`);
-                document.getElementById('cmdInput').value = ''; 
+        async function sendCmd() {
+            const input = document.getElementById('cmdInput');
+            const original = input.value;
+            const val = original.trim();
+            if (!val) {
+                showCommandFeedback('3146A', '自訂指令', 'warning', '請先輸入指令');
+                return false;
             }
+            const sent = await sendEscortCmd(val);
+            if (sent && input.value === original) input.value = '';
+            return sent;
         }
 
         // 每顆按鈕記錄下一次要送出的指令；不將介面切換當成儀器狀態回報。
@@ -658,30 +690,40 @@
 
         function sendProdigitCmd(cmd) {
             if (!isProdigitConnected || !prodigitWS || prodigitWS.readyState !== WebSocket.OPEN) {
-                alert('3316E 尚未連線，請先連線電子負載。');
+                showCommandFeedback('3316E', cmd, 'warning', '請先連線電子負載');
                 return false;
             }
             try {
                 prodigitWS.send(cmd);
+                // WebSocket.send only queues transport; do not claim instrument execution.
+                showCommandFeedback('3316E', cmd, 'queued');
                 return true;
             } catch (err) {
                 console.error('3316E 指令傳送失敗:', err);
-                alert('3316E 指令傳送失敗，請檢查連線後重試。');
+                showCommandFeedback('3316E', cmd, 'error', '請檢查連線後重試');
                 return false;
             }
         }
 
         function setProdigitValue(type) {
             const val = document.getElementById('valProdigit').value.trim();
-            if (val && isProdigitConnected) prodigitWS.send(`${type} ${val}`);
+            if (!val) {
+                showCommandFeedback('3316E', type, 'warning', '請先輸入數值');
+                return false;
+            }
+            return sendProdigitCmd(`${type} ${val}`);
         }
 
         function sendProdigitCustom() {
-            const val = document.getElementById('cmdProdigit').value.trim();
-            if (val && isProdigitConnected) {
-                prodigitWS.send(val);
-                document.getElementById('cmdProdigit').value = '';
+            const input = document.getElementById('cmdProdigit');
+            const val = input.value.trim();
+            if (!val) {
+                showCommandFeedback('3316E', '自訂指令', 'warning', '請先輸入指令');
+                return false;
             }
+            const sent = sendProdigitCmd(val);
+            if (sent) input.value = '';
+            return sent;
         }
 
         async function stopAndDownload() {
