@@ -188,6 +188,31 @@
         .command-feedback[hidden] { display: none; }
         .command-feedback[data-kind="error"] { background: #fff1f1; color: #9f2424; border-color: #edb9b9; border-left-color: #c83c3c; }
         .command-feedback[data-kind="warning"] { background: #fffaeb; color: #875b08; border-color: #eed59f; border-left-color: #c68a17; }
+
+        /* 截圖指定的六組按鈕：等寬、放大並填滿各自區塊。 */
+        .control-panel .fill-group { padding: 10px; }
+        .control-panel .fill-group > strong { font-size: 15px; }
+        .control-panel .fill-group > .fill-buttons {
+            display: grid !important; gap: 8px !important; margin-top: 8px !important;
+            align-items: stretch !important;
+        }
+        .fill-pair > .fill-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .fill-mode > .fill-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .fill-recall > .fill-buttons { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .fill-system > .fill-buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .fill-function > .fill-buttons { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .control-panel .fill-group .fill-buttons > button {
+            width: 100%; min-width: 0 !important; min-height: 52px;
+            padding: 10px 8px !important; font-size: clamp(18px, 1.2vw, 22px) !important;
+            font-weight: 700; border-radius: 7px; line-height: 1.3;
+            display: flex; align-items: center; justify-content: center;
+            white-space: normal; overflow-wrap: anywhere;
+        }
+        @media (max-width: 520px) {
+            .control-grid > .fill-group { grid-column: 1 / -1; }
+            .fill-system > .fill-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .fill-function > .fill-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
     </style>
 </head>
 <body>
@@ -230,31 +255,31 @@
             <!-- 3316E 完整控制面板 -->
             <h3 style="margin-top: 30px;">3316E 負載控制面板</h3>
             <div class="control-grid">
-            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group fill-group fill-pair" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">開關與短路測試：</strong>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button id="loadToggle" type="button" onclick="toggleProdigitControl('LOAD')" aria-label="傳送 LOAD ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#28a745; color:white; padding:6px 10px; font-size:13px; min-width:100px;">Load ON</button>
                     <button id="shortToggle" type="button" onclick="toggleProdigitControl('SHORT')" aria-label="傳送 SHORT ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">Short ON</button>
                 </div>
             </div>
-            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group fill-group fill-pair" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">預設與準位 (PRES / LEVEL)：</strong>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button id="presToggle" type="button" onclick="toggleProdigitControl('PRES')" aria-label="傳送 PRES ON 指令" title="按鈕顯示下一次要送出的指令" style="background:#ffc107; color:black; padding:6px 10px; font-size:13px; min-width:100px;">PRES ON</button>
                     <button id="levelToggle" type="button" onclick="toggleProdigitControl('LEV')" aria-label="傳送 LEV HIGH 指令" title="按鈕顯示下一次要送出的指令" style="background:#6c757d; color:white; padding:6px 10px; font-size:13px; min-width:100px;">LEVEL Hi</button>
                 </div>
             </div>
-            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group fill-group fill-mode" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">模式切換：</strong>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('MODE CC')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CC 模式</button>
                     <button onclick="sendProdigitCmd('MODE CV')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CV 模式</button>
                     <button onclick="sendProdigitCmd('MODE CR')" style="background:#6c757d; color:white; padding: 6px 10px; font-size: 13px;">CR 模式</button>
                 </div>
             </div>
-            <div class="control-group" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group fill-group fill-recall" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">記憶體呼叫 (Recall)：</strong>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendProdigitCmd('*RCL 1')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M1</button>
                     <button onclick="sendProdigitCmd('*RCL 2')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M2</button>
                     <button onclick="sendProdigitCmd('*RCL 3')" style="background:#17a2b8; color:white; padding: 6px 10px; font-size: 13px;">M3</button>
@@ -286,18 +311,18 @@
             <!-- 3146A 控制面板 -->
             <h3 style="margin-top: 30px;">3146A 控制面板</h3>
             <div class="control-grid">
-            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide fill-group fill-system" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">讀取與系統 (R 系列)：</strong>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendEscortCmd('R0')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">狀態(R0)</button>
                     <button onclick="sendEscortCmd('R1')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">主畫面(R1)</button>
                     <button onclick="sendEscortCmd('R2')" class="btn-primary" style="padding: 6px 10px; font-size: 13px;">副畫面(R2)</button>
                     <button onclick="sendEscortCmd('RST')" style="background:#d9534f; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">重置(RST)</button>
                 </div>
             </div>
-            <div class="control-group control-wide" style="margin-bottom: 15px; font-size: 14px;">
+            <div class="control-group control-wide fill-group fill-function" style="margin-bottom: 15px; font-size: 14px;">
                 <strong style="color: #555;">功能切換 (K 系列)：</strong>
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
+                <div class="fill-buttons" style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px;">
                     <button onclick="sendEscortCmd('K1')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Vdc</button>
                     <button onclick="sendEscortCmd('K2')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Adc</button>
                     <button onclick="sendEscortCmd('K3')" style="background:#6c757d; color:white; padding: 6px 10px; border:none; border-radius:4px; font-size: 13px;">Vac</button>
