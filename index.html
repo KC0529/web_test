@@ -213,6 +213,14 @@
             .fill-system > .fill-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .fill-function > .fill-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
+        /* 只放大六顆 High / Low 數值設定按鈕的文字。 */
+        .control-panel .quick-group > .quick-buttons > button {
+            font-size: 22px !important; font-weight: 700; line-height: 1.2;
+            white-space: normal; overflow-wrap: anywhere;
+        }
+        @media (max-width: 600px) {
+            .control-panel .quick-group > .quick-buttons > button { font-size: 18px !important; }
+        }
     </style>
 </head>
 <body>
